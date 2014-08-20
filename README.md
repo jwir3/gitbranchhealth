@@ -1,6 +1,8 @@
 gitbranchhealth
 ===============
 
+[![PyPI version](https://badge.fury.io/py/gitbranchhealth.svg)](http://badge.fury.io/py/gitbranchhealth)
+
 A tool for determining the health of branches in a git repository. The tool will give you the amount of time since git branches have been modified.
 
 Each git branch is also given a color indicating its health: green for healthy (the branch was updated recently), yellow for somewhat unhealthy (branch hasn't been updated lately, but it's unclear whether the branch is too old to be used), or red for stale (the branch hasn't been updated in a long time).
