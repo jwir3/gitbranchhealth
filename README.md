@@ -1,4 +1,4 @@
-gitbranchhealth
+git-branchhealth
 ===============
 
 [![PyPI version](https://badge.fury.io/py/gitbranchhealth.svg)](http://badge.fury.io/py/gitbranchhealth)
