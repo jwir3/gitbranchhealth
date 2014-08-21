@@ -27,3 +27,14 @@ Basic usage:
 ```
 git branchheath <path-to-repo>
 ```
+
+Configuration/Options
+---------------
+`git-branchhealth` uses the `git` configuration file to specify most options,
+but they are also available to be passed in on the command line.
+
+If you choose to specify a configuration option, use the section header `[branchhealth]`.
+
+| Option Name |    Description    | Command Line Flag | Configuration File Option |
+| ----------- | ----------------- | ----------------- | ------------------------- |
+| noColor     | Specify not to use ANSI colors when printing the branch health results. | -n, --nocolor | nocolor |
