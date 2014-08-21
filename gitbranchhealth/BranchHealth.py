@@ -12,6 +12,7 @@
 from nicelog.formatters import ColorLineFormatter
 import logging
 import sys
+import os
 
 from git import *
 import argparse
@@ -19,6 +20,7 @@ import sys
 from datetime import *
 import dateutil.parser
 from colors import red, yellow, green
+from branchhealthconfig import BranchHealthConfig
 
 # Use to turn on debugging output
 DEBUG = False
@@ -197,7 +199,10 @@ def markBranchHealth(aBranchList, aHealthyDays):
 # @param aOptions Display options specified on the command line.
 
 def printBranchHealthChart(aBranchMap, aOptions):
+  global gLog
   (badOnly, noColor) = aOptions
+
+  gLog.debug("Should use color? " + str(not noColor))
 
   for branchTuple in aBranchMap:
     (branchName, lastActivityRel, branchHealth) = branchTuple
@@ -291,6 +296,13 @@ def runMain():
     gParser.print_help()
     return
 
+  # Get the configuration file from the remote repository
+  configFile = os.path.join(repo, ".git/config")
+  config = BranchHealthConfig(configFile)
+  (badOnly, noColor) = options
+  noColor = not config.shouldUseColor() or not noColor
+  gLog.debug("Should use color? " + str(noColor))
+  options = (badOnly, noColor)
   showBranchHealth(repo, remote, int(numHealthyDays), options)
 
 if __name__ == '__main__':
