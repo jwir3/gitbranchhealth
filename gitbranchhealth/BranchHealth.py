@@ -197,7 +197,7 @@ def markBranchHealth(aBranchList, aHealthyDays):
 # @param aOptions Display options specified on the command line.
 
 def printBranchHealthChart(aBranchMap, aOptions):
-  (badOnly) = aOptions
+  (badOnly, noColor) = aOptions
 
   for branchTuple in aBranchMap:
     (branchName, lastActivityRel, branchHealth) = branchTuple
@@ -206,12 +206,15 @@ def printBranchHealthChart(aBranchMap, aOptions):
     if badOnly and not branchHealth == OLD:
       continue
 
-    if branchHealth == HEALTHY:
-      coloredDate = green(lastActivityRel)
-    elif branchHealth == AGED:
-      coloredDate = yellow(lastActivityRel)
+    if not noColor:
+      if branchHealth == HEALTHY:
+        coloredDate = green(lastActivityRel)
+      elif branchHealth == AGED:
+        coloredDate = yellow(lastActivityRel)
+      else:
+        coloredDate = red(lastActivityRel)
     else:
-      coloredDate = red(lastActivityRel)
+        coloredDate = lastActivityRel
 
     alignedPrintout = '{0:40} {1}'.format(branchName + ":", coloredDate)
     print(alignedPrintout)
@@ -237,6 +240,8 @@ def createParser():
   parser.add_argument('-d', '--days', action='store', dest='numDays',
                       help='Specify number of days old where a branch is considered to no longer be \'healthy\'',
                       default=14)
+  parser.add_argument('-n', '--nocolor', action='store_true', help="Don't use ANSI colors to display branch health",
+                      dest='noColor')
   parser.add_argument('repo', help='Path to git repository where branches should be listed',
                       nargs='?')
 
@@ -256,7 +261,7 @@ def parseArguments():
     VERBOSE=True
     DEBUG=True
 
-  options = (parsed.badOnly)
+  options = (parsed.badOnly, parsed.noColor)
 
   return (parsed.repo, parsed.remote, parsed.numDays, options)
 
