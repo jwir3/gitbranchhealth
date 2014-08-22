@@ -20,5 +20,5 @@ setup(name=progName,
       url=progUrl,
       packages=['gitbranchhealth'],
       entry_points=entry_points,
-      requires=['argparse', 'ansicolors']
+      requires=['argparse', 'ansicolors', 'nicelog']
 )

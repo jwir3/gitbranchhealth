@@ -8,6 +8,6 @@ class BranchHealthConfig:
   def shouldUseColor(self):
     try:
       color = self.mParser.get_value(option='nocolor')
-    except ConfigParser.NoSectionError:
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
       return True
     return color

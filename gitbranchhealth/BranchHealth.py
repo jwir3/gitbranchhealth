@@ -300,8 +300,10 @@ def runMain():
   configFile = os.path.join(repo, ".git/config")
   config = BranchHealthConfig(configFile)
   (badOnly, noColor) = options
-  noColor = not config.shouldUseColor() or not noColor
-  gLog.debug("Should use color? " + str(noColor))
+  gLog.debug("Switch noColor: " + str(noColor))
+  gLog.debug("Config should use color: " + str(config.shouldUseColor()))
+  noColor = not config.shouldUseColor() or noColor
+  gLog.debug("Should use color? " + str(not noColor))
   options = (badOnly, noColor)
   showBranchHealth(repo, remote, int(numHealthyDays), options)
 
