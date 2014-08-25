@@ -2,7 +2,6 @@ git-branchhealth
 ===============
 
 * [![PyPI version](https://badge.fury.io/py/gitbranchhealth.svg)](http://badge.fury.io/py/gitbranchhealth)
-* [![Build Status](https://travis-ci.org/jwir3/gitbranchhealth.svg)](https://travis-ci.org/jwir3/gitbranchhealth)
 
 A tool for determining the health of branches in a git repository. The tool will give you the amount of time since git branches have been modified.
 
