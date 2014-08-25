@@ -2,4 +2,5 @@ language: python
 python:
   - "2.7"
   - "2.6"
-install: pip install argparse ansicolors nicelog 
+install: pip install argparse ansicolors nicelog
+script: python setup.py test
