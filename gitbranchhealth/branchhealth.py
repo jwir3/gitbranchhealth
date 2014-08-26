@@ -75,8 +75,8 @@ class BranchHealthOptions:
   def getRemoteName(self):
     return self.mRemoteName
 
-  def getNumDays(self):
-    return self.mNumDays
+  def getHealthyDays(self):
+    return int(self.mNumDays)
 
   def getBadOnly(self):
     return self.mBadOnly
@@ -144,7 +144,7 @@ def showBranchHealth(aOptions):
 
       branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
 
-    sortedBranches = sortBranchesByHealth(branchMap, aOptions.getNumDays())
+    sortedBranches = sortBranchesByHealth(branchMap, aOptions.getHealthyDays())
     printBranchHealthChart(sortedBranches, aOptions)
 
 
