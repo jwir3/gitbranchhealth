@@ -42,47 +42,83 @@ OLD = 2
 gLog = None
 gParser = None
 
-# Show the health of all branches in a git repository with a given path.
-#
-# @param aRepoPath The path to the git repository for which branch health
-#        information is desired.
-# @param aRemoteName The name of the remote of repository whose local repository
-#        is located at aRepoPath, on which to operate. Note that specifying
-#        'None' for this parameter will cause it to operate on the local version
-#        of the repository.
-# @param aHealthyDays The number of days that a branch can be untouched and
-#        still be considered 'healthy'.
-# @param aOptions Display options specified on the command line.
+class BranchHealthOptions:
+  """
+  Composition of all possible options for a given run of git branchhealth.
+  """
 
-def showBranchHealth(aRepoPath, aRemoteName, aHealthyDays, aOptions):
-  global gLog
+  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aLog=None):
+    """
+    Initialize a new BranchHealthOptions object with parameters that were given
+    from the command line.
+    """
+    self.mRepoPath = aRepoPath
+    self.mRemoteName = aRemoteName
+    self.mNumDays = aNumDays
+    self.mBadOnly = aBadOnly
+    self.mNoColor = aNoColor
+    self.mRepo = Repo(self.mRepoPath)
+    self.mLog = aLog
+    self.__setupConfigOptions()
 
+  def getRepo(self):
+    return self.mRepo
+
+  def getRepoPath(self):
+    return self.mRepoPath
+
+  def getRemoteName(self):
+    return self.mRemoteName
+
+  def getNumDays(self):
+    return self.mNumDays
+
+  def getBadOnly(self):
+    return self.mBadOnly
+
+  def shouldHaveColor(self):
+    return not self.mNoColor
+
+  def getLog(self):
+    return self.mLog
+
+  def __setupConfigOptions(self):
+    log = self.getLog()
+    config = BranchHealthConfig(self.getRepo())
+    if log:
+      log.debug("Switch noColor: " + str(self.mNoColor))
+      log.debug("Config should use color: " + str(config.shouldUseColor()))
+
+    self.mNoColor = not config.shouldUseColor() or self.mNoColor
+
+    if log:
+      log.debug("Should use color? " + str(self.shouldHaveColor))
+
+def showBranchHealth(aOptions):
   branchMap = []
 
-  gLog.debug('Operating on repository in: ' + aRepoPath)
-  gLog.debug('Operating on remote named: ' + aRemoteName)
+  log = aOptions.getLog()
+
+  remoteName = aOptions.getRemoteName()
+  repoPath = aOptions.getRepoPath()
+
+  if log:
+    log.debug('Operating on repository in: ' + repoPath)
+    log.debug('Operating on remote named: ' + remoteName)
 
   remotePrefix = ''
-  if aRemoteName:
-    remotePrefix = 'remotes/' + aRemoteName + '/'
+  if remoteName:
+    remotePrefix = 'remotes/' + remoteName + '/'
 
-  repo = Repo(aRepoPath)
+  repo = aOptions.getRepo()
 
-  # Now that we have a repository, get the configuration file from it
-  config = BranchHealthConfig(repo)
-  (badOnly, noColor) = aOptions
-  gLog.debug("Switch noColor: " + str(noColor))
-  gLog.debug("Config should use color: " + str(config.shouldUseColor()))
-  noColor = not config.shouldUseColor() or noColor
-  gLog.debug("Should use color? " + str(not noColor))
-  aOptions = (badOnly, noColor)
-  gitCmd = Git(aRepoPath)
+  gitCmd = Git(repoPath)
   assert(repo.bare == False)
 
   remoteToUse = None
 
   for someRemote in repo.remotes:
-    if aRemoteName == someRemote.name:
+    if remoteName == someRemote.name:
       remoteToUse = someRemote
 
   if remoteToUse:
@@ -102,26 +138,28 @@ def showBranchHealth(aRepoPath, aRemoteName, aHealthyDays, aOptions):
 
       branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
 
-    sortedBranches = sortBranchesByHealth(branchMap, aHealthyDays)
+    sortedBranches = sortBranchesByHealth(branchMap, aOptions.getNumDays())
     printBranchHealthChart(sortedBranches, aOptions)
 
-# Comparison function to compare two branch tuples.
-#
-# @param aTupleList1 A branch tuple containing the following:
-#        1) The branch name and 2) A date tuple, with each tuple continaing the
-#        following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-#        iso-standardized date for comparison with other dates. Note that 2a and
-#        2b should be equivalent, with 2a being less accurate, but more easily
-#        interpretable by humans.
-# @param aTupleList2 A second branch tuple, with the same specification as
-#        aTupleList1 which should be compared to aTupleList1.
-#
-# @returns -1, If the branch represented by aTupleList1 is older than the branch
-#          represented by aTupleList2; 1 if the branch represented by
-#          aTupleList2 is older than the branch represented by aTupleList1;
-#          0, otherwise.
 
 def isoDateComparator(aTupleList1, aTupleList2):
+  """
+  Comparison function to compare two branch tuples.
+
+  @param aTupleList1 A branch tuple containing the following:
+         1) The branch name and 2) A date tuple, with each tuple continaing the
+         following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
+         iso-standardized date for comparison with other dates. Note that 2a and
+         2b should be equivalent, with 2a being less accurate, but more easily
+         interpretable by humans.
+  @param aTupleList2 A second branch tuple, with the same specification as
+         aTupleList1 which should be compared to aTupleList1.
+
+  @returns -1, If the branch represented by aTupleList1 is older than the branch
+           represented by aTupleList2; 1 if the branch represented by
+           aTupleList2 is older than the branch represented by aTupleList1;
+           0, otherwise.
+  """
   (branchName1, valueTuple1) = aTupleList1
   (branchName2, valueTuple2) = aTupleList2
 
@@ -211,10 +249,11 @@ def markBranchHealth(aBranchList, aHealthyDays):
 # @param aOptions Display options specified on the command line.
 
 def printBranchHealthChart(aBranchMap, aOptions):
-  global gLog
-  (badOnly, noColor) = aOptions
+  badOnly = aOptions.getBadOnly()
+  noColor = not aOptions.shouldHaveColor()
 
-  gLog.debug("Should use color? " + str(not noColor))
+  log = aOptions.getLog()
+  log.debug("Should use color? " + str(not noColor))
 
   for branchTuple in aBranchMap:
     (branchName, lastActivityRel, branchHealth) = branchTuple
@@ -267,7 +306,7 @@ def createParser():
 # Parse arguments given on the command line. Uses the argparse package to
 # perform this task.
 def parseArguments():
-  global gParser, VERBOSE, DEBUG
+  global gParser, gLog, VERBOSE, DEBUG
 
   if not gParser:
     gParser = createParser()
@@ -278,12 +317,11 @@ def parseArguments():
     VERBOSE=True
     DEBUG=True
 
-  options = (parsed.badOnly, parsed.noColor)
-
   # Retrieve the git repository, if one wasn't given on the command line
   repo = parsed.repo
 
-  return (repo, parsed.remote, parsed.numDays, options)
+  #return (repo, parsed.remote, parsed.numDays, options)
+  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, gLog)
 
 def setupLog():
   global gLog, DEBUG
@@ -304,14 +342,14 @@ def setupLog():
 def runMain():
   global gParser, gLog, DEBUG, VERBOSE
 
-  (repo, remote, numHealthyDays, options) = parseArguments()
+  options = parseArguments()
   setupLog()
 
-  if repo == None:
+  if options.getRepoPath() == None:
     gParser.print_help()
     return
 
-  showBranchHealth(repo, remote, int(numHealthyDays), options)
+  showBranchHealth(options)
 
 if __name__ == '__main__':
   runMain()
