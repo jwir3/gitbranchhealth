@@ -67,6 +67,15 @@ def showBranchHealth(aRepoPath, aRemoteName, aHealthyDays, aOptions):
     remotePrefix = 'remotes/' + aRemoteName + '/'
 
   repo = Repo(aRepoPath)
+
+  # Now that we have a repository, get the configuration file from it
+  config = BranchHealthConfig(repo)
+  (badOnly, noColor) = aOptions
+  gLog.debug("Switch noColor: " + str(noColor))
+  gLog.debug("Config should use color: " + str(config.shouldUseColor()))
+  noColor = not config.shouldUseColor() or noColor
+  gLog.debug("Should use color? " + str(not noColor))
+  aOptions = (badOnly, noColor)
   gitCmd = Git(aRepoPath)
   assert(repo.bare == False)
 
@@ -301,15 +310,6 @@ def runMain():
     gParser.print_help()
     return
 
-  # Get the configuration file from the remote repository
-  configFile = os.path.join(repo, ".git/config")
-  config = BranchHealthConfig(configFile)
-  (badOnly, noColor) = options
-  gLog.debug("Switch noColor: " + str(noColor))
-  gLog.debug("Config should use color: " + str(config.shouldUseColor()))
-  noColor = not config.shouldUseColor() or noColor
-  gLog.debug("Should use color? " + str(not noColor))
-  options = (badOnly, noColor)
   showBranchHealth(repo, remote, int(numHealthyDays), options)
 
 if __name__ == '__main__':

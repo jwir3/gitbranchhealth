@@ -2,13 +2,12 @@ import unittest
 import sys
 import os
 from gitbranchhealth.branchhealthconfig import BranchHealthConfig
+from git import Repo
 
 class BranchHealthTestSuite(unittest.TestCase):
-  def setUp(self):
-    self.mConfigPath = os.path.join(os.path.dirname(__file__), "../../.git/config")
-
   def test_config_color(self):
-      conf = BranchHealthConfig(self.mConfigPath)
+      repo = Repo(".")
+      conf = BranchHealthConfig(repo)
       color = conf.shouldUseColor()
       self.assertTrue(color)
 
