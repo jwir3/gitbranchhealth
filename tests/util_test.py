@@ -17,6 +17,12 @@ class UtilTestSuite(unittest.TestCase):
    expectedPath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
    self.assertEquals(expectedPath, btm)
 
+  def test_is_git_dir(self):
+    path = os.path.join(os.path.dirname(__file__))
+    self.assertFalse(gitbranchhealth.util.isGitRepo(path))
+    repoPath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    self.assertTrue(gitbranchhealth.util.isGitRepo(repoPath))
+
 def allTests():
   unittest.main()
 

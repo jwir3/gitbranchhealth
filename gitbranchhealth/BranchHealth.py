@@ -20,7 +20,10 @@ import sys
 from datetime import *
 import dateutil.parser
 from colors import red, yellow, green
+
 from branchhealthconfig import BranchHealthConfig
+from util import hasGitDir
+from util import isGitRepo
 
 # Use to turn on debugging output
 DEBUG = False
@@ -247,8 +250,7 @@ def createParser():
                       default=14)
   parser.add_argument('-n', '--nocolor', action='store_true', help="Don't use ANSI colors to display branch health",
                       dest='noColor')
-  parser.add_argument('repo', help='Path to git repository where branches should be listed',
-                      nargs='?')
+  parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
 
   return parser
 
@@ -268,7 +270,10 @@ def parseArguments():
 
   options = (parsed.badOnly, parsed.noColor)
 
-  return (parsed.repo, parsed.remote, parsed.numDays, options)
+  # Retrieve the git repository, if one wasn't given on the command line
+  repo = parsed.repo
+
+  return (repo, parsed.remote, parsed.numDays, options)
 
 def setupLog():
   global gLog, DEBUG

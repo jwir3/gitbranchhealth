@@ -42,6 +42,28 @@ def __do_walk_up(bottom):
   for x in __do_walk_up(new_path):
     yield x
 
+def isGitRepo(aPathStr):
+  """
+  Determine if a string path is a git repository. That is, determine if there
+  is a directory within the given path called '.git'.
+
+  @param aPathStr The string representation of a path to check for the existence
+         of a '.git' subdirectory.
+
+  @return True, if aPathStr contains a subdirectory called '.git'; False,
+          otherwise.
+  """
+  try:
+    names = os.listdir(aPathStr)
+  except Exception as e:
+    print(e)
+    return False
+
+  for name in names:
+    if path.isdir(path.join(aPathStr, '.git')):
+      return True
+  return False
+
 def hasGitDir(aPath):
   """
   Determine if a specified path from an iteration of walkUp has the special
@@ -55,6 +77,7 @@ def hasGitDir(aPath):
           '.git'; False, otherwise.
   """
   (bottom, dirs, nondirs) = aPath
+
   if '.git' in dirs:
     return bottom
   return False
