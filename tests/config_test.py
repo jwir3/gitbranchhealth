@@ -1,7 +1,7 @@
 import unittest
 import sys
 import os
-from gitbranchhealth.branchhealthconfig import BranchHealthConfig
+from gitbranchhealth.config import BranchHealthConfig
 from git import Repo
 
 class BranchHealthTestSuite(unittest.TestCase):

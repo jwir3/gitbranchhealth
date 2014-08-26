@@ -9,7 +9,7 @@ progEmail = 'jaywir3@gmail.com'
 progUrl = 'http://github.com/jwir3/gitbranchhealth'
 downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/v0.1.tar.gz',
 entry_points = { 'console_scripts': [
-  'git-branchhealth = gitbranchhealth.BranchHealth:runMain',
+  'git-branchhealth = gitbranchhealth.branchhealth:runMain',
 ]}
 
 setup(name=progName,
