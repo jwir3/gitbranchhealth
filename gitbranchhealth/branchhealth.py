@@ -48,7 +48,7 @@ class BranchHealthOptions:
   Composition of all possible options for a given run of git branchhealth.
   """
 
-  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aLog=None):
+  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aDeleteOldBranches, aLog=None):
     """
     Initialize a new BranchHealthOptions object with parameters that were given
     from the command line.
@@ -60,7 +60,11 @@ class BranchHealthOptions:
     self.mNoColor = aNoColor
     self.mRepo = Repo(self.mRepoPath)
     self.mLog = aLog
+    self.mDeleteOldBranches = aDeleteOldBranches
     self.__setupConfigOptions()
+
+  def shouldDeleteOldBranches(self):
+    return self.mDeleteOldBranches
 
   def getRepo(self):
     return self.mRepo
@@ -227,8 +231,14 @@ def printBranchHealthChart(aBranchMap, aOptions):
   log = gLog
   log.debug("Should use color? " + str(not noColor))
 
+  deleteBucket = []
   for branchTuple in aBranchMap:
     (branchName, lastActivityRel, branchHealth) = branchTuple
+
+    # If this is an unhealthy branch, then let's put it in the "delete"
+    # bucket.
+    if branchHealth == OLD:
+      deleteBucket.append(branchTuple)
 
     # Skip healthy and aged branches if we're only looking for bad ones
     if badOnly and not branchHealth == OLD:
@@ -246,6 +256,13 @@ def printBranchHealthChart(aBranchMap, aOptions):
 
     alignedPrintout = '{0:40} {1}'.format(branchName + ":", coloredDate)
     print(alignedPrintout)
+
+  if aOptions.shouldDeleteOldBranches():
+    deleteBucketNames = []
+    for branchToDelete in deleteBucket:
+      (branchName, lastActivityRel, branchHealth) = branchToDelete
+      deleteBucketNames.append(branchName)
+    log.debug("About to delete old branches: " + str(deleteBucketNames))
 
 # Construct an argparse parser for use with this program to parse command
 # line arguments.
@@ -292,8 +309,7 @@ def parseArguments():
   # Retrieve the git repository, if one wasn't given on the command line
   repo = parsed.repo
 
-  #return (repo, parsed.remote, parsed.numDays, options)
-  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, gLog)
+  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, gLog)
 
 def setupLog():
   global gLog, DEBUG
