@@ -21,7 +21,7 @@ from datetime import *
 import dateutil.parser
 from colors import red, yellow, green
 
-from branchhealthconfig import BranchHealthConfig
+from config import BranchHealthConfig
 from util import hasGitDir
 from util import isGitRepo
 
@@ -260,6 +260,7 @@ def createParser():
   parser.add_argument('-n', '--nocolor', action='store_true', help="Don't use ANSI colors to display branch health",
                       dest='noColor')
   parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
+  parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
 
   return parser
 
