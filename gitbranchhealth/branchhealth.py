@@ -87,6 +87,9 @@ class BranchHealthOptions:
   def getLog(self):
     return self.mLog
 
+  def setLog(self, aLog):
+    self.mLog = aLog
+
   def __setupConfigOptions(self):
     log = self.getLog()
     config = BranchHealthConfig(self.getRepo())
@@ -258,11 +261,16 @@ def printBranchHealthChart(aBranchMap, aOptions):
     print(alignedPrintout)
 
   if aOptions.shouldDeleteOldBranches():
-    deleteBucketNames = []
-    for branchToDelete in deleteBucket:
-      (branchName, lastActivityRel, branchHealth) = branchToDelete
-      deleteBucketNames.append(branchName)
-    log.debug("About to delete old branches: " + str(deleteBucketNames))
+    deleteOldBranches(deleteBucket, aOptions)
+
+
+def deleteOldBranches(aBranchesToDelete, aOptions):
+  log = aOptions.getLog()
+  deleteBucketNames = []
+  for branchToDelete in aBranchesToDelete:
+    (branchName, lastActivityRel, branchHealth) = branchToDelete
+    deleteBucketNames.append(branchName)
+  log.debug("About to delete old branches: " + str(deleteBucketNames))
 
 # Construct an argparse parser for use with this program to parse command
 # line arguments.
@@ -309,9 +317,9 @@ def parseArguments():
   # Retrieve the git repository, if one wasn't given on the command line
   repo = parsed.repo
 
-  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, gLog)
+  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld)
 
-def setupLog():
+def setupLog(aOptions):
   global gLog, DEBUG
 
   gLog = logging.getLogger("git-branchhealth")
@@ -326,12 +334,14 @@ def setupLog():
 
   gLog.addHandler(handler)
 
+  aOptions.setLog(gLog)
+
 # Main entry point
 def runMain():
   global gParser, gLog, DEBUG, VERBOSE
 
   options = parseArguments()
-  setupLog()
+  setupLog(options)
 
   if options.getRepoPath() == None:
     gParser.print_help()
