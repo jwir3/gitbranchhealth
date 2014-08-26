@@ -246,7 +246,7 @@ def createParser():
   parser = argparse.ArgumentParser(description='''
      Show health (time since creation) of git branches, in order.
   ''', add_help=True)
-  parser.add_argument('-V', '--verbose', action='store_true', dest='verbose',
+  parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
                       help='Output as much as possible')
   parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
                       help='Operate on specified remote', default='origin',
