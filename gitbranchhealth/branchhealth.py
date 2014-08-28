@@ -15,6 +15,11 @@ import sys
 import os
 
 from git import *
+from git.refs.head import Head
+from git.util import join_path
+from git.refs.remote import RemoteReference
+from git.refs.reference import Reference
+
 import argparse
 import sys
 from datetime import *
@@ -261,16 +266,43 @@ def printBranchHealthChart(aBranchMap, aOptions):
     print(alignedPrintout)
 
   if aOptions.shouldDeleteOldBranches():
-    deleteOldBranches(deleteBucket, aOptions)
+    deleteAllOldBranches(deleteBucket, aOptions)
 
+def splitBranchName(aBranchName):
+  return aBranchName.split('/')
 
-def deleteOldBranches(aBranchesToDelete, aOptions):
+def deleteOldBranch(aBranch, aOptions, aRemote='local', aShouldDeleteLocal=True):
+  # Cowardly refuse to remove the special 'master' branch
+  if aBranch.split('/')[-1] == 'master':
+    log.warn("Cowardly refusing to delete master branch")
+    return
+
   log = aOptions.getLog()
-  deleteBucketNames = []
+  repo = aOptions.getRepo()
+  if aRemote == 'local':
+    log.debug("Going to delete LOCAL branch: " + aBranch)
+    if aBranch.split('/')[-1] in repo.heads:
+      Head.delete(aBranch.split('/')[-1])
+  else:
+    log.debug("Going to delete REMOTE branch: " + aBranch)
+    branchRef = RemoteReference(repo, join_path('refs', aBranch))
+    log.debug("Ready to delete: " + str(branchRef))
+    RemoteReference.delete(aOptions.getRepo(), branchRef)
+
+    # Now, delete the corresponding local branch, if it exists
+    if aShouldDeleteLocal:
+      deleteOldBranch(branchRef.remote_head, aOptions)
+
+def deleteAllOldBranches(aBranchesToDelete, aOptions):
+  log = aOptions.getLog()
   for branchToDelete in aBranchesToDelete:
     (branchName, lastActivityRel, branchHealth) = branchToDelete
-    deleteBucketNames.append(branchName)
-  log.debug("About to delete old branches: " + str(deleteBucketNames))
+    if branchName.startswith('refs/heads'):
+      deleteOldBranch(branchName, aOptions)
+    elif branchName.startswith('remotes'):
+      splitName = branchName.split('/')
+      remoteName = splitName[len(splitName) - 2]
+      deleteOldBranch(branchName, aOptions, remoteName, True)
 
 # Construct an argparse parser for use with this program to parse command
 # line arguments.
