@@ -1,0 +1,64 @@
+# manager.py
+#
+# Copyright (C) 2014 Scott Johnson <jaywir3@gmail.com>, and contributors
+#
+# Module for managing branches within git-branchhealth.
+
+from git.refs.head import Head
+from git.util import join_path
+from git.refs.remote import RemoteReference
+from git.refs.reference import Reference
+
+class BranchManager:
+  def __init__(self, aOptions):
+    self.__mOptions = aOptions
+
+  def getLocalBranches(self):
+    repo = self.__mOptions.getRepo()
+    heads = [x.name for x in repo.branches]
+    return heads
+
+  def deleteAllOldBranches(self, aBranchesToDelete):
+    log = self.__getOptions().getLog()
+    for branchToDelete in aBranchesToDelete:
+      (branchName, lastActivityRel, branchHealth) = branchToDelete
+      if branchName.startswith('refs/heads'):
+        self.__deleteOldBranch(branchName)
+      elif branchName.startswith('remotes'):
+        splitName = branchName.split('/')
+        remoteName = splitName[len(splitName) - 2]
+        self.__deleteOldBranch(branchName, remoteName, True)
+
+  # Private API
+  def __getOptions(self):
+    """
+    Retrieve the options object that this BranchManager was instantiated
+    with.
+
+    @return The BranchHealthOptions object that this BranchManager was created
+            with.
+    """
+    return self.__mOptions
+
+  def __deleteOldBranch(self, aBranch, aRemote='local', aShouldDeleteLocal=True):
+    log = self.__getOptions().getLog()
+    repo = self.__getOptions().getRepo()
+
+    # Cowardly refuse to remove the special 'master' branch
+    if aBranch.split('/')[-1] == 'master':
+      log.warn("Cowardly refusing to delete master branch")
+      return
+
+    if aRemote == 'local':
+      log.debug("Going to delete LOCAL branch: " + aBranch)
+      if aBranch.split('/')[-1] in repo.heads:
+        Head.delete(aBranch.split('/')[-1])
+    else:
+      log.debug("Going to delete REMOTE branch: " + aBranch)
+      branchRef = RemoteReference(repo, join_path('refs', aBranch))
+      log.debug("Ready to delete: " + str(branchRef))
+      RemoteReference.delete(repo, branchRef)
+
+      # Now, delete the corresponding local branch, if it exists
+      if aShouldDeleteLocal:
+        self.deleteOldBranch(branchRef.remote_head)
