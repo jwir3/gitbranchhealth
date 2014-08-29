@@ -12,7 +12,7 @@ downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-
 entry_points = { 'console_scripts': [
   'git-branchhealth = gitbranchhealth.branchhealth:runMain',
 ]}
-installRequirements = parseRequirements("requirements.txt")
+installRequirements = parse_requirements("requirements.txt")
 reqs = [str(ir.req) for ir in installRequirements]
 
 setup(name=progName,
