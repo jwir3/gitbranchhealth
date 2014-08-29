@@ -38,5 +38,6 @@ If you choose to specify a configuration option, use the section header `[branch
 
 | Option Name |    Description    | Command Line Flag | Configuration File Option |
 | ----------- | ----------------- | ----------------- | ------------------------- |
-| No Color     | Specify not to use ANSI colors when printing the branch health results. | -n, --nocolor | nocolor |
 | No Branch Ignoring    | Specify that no branches should be ignored. Normally, all branches titled "HEAD" or "master" are ignored, as these are considered "special", and reporting/deletion should not happen on them. If this option is specified, these branches are included in reporting and deletion with all of the other branches. | --no-ignore | noignore |
+| No Color     | Specify not to use ANSI colors when printing the branch health results. | -n, --nocolor | nocolor |
+| Verbose Output | Make `gitbranchhealth` output as much information on the command line as possible. | -v | - |
