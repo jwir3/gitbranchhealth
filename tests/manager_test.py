@@ -38,7 +38,7 @@ class ManagerTestSuite(unittest.TestCase):
     for (branchName, lastActivity) in branchMap:
       branchNames.append(branchName)
 
-    expectedBranches = ['refs/heads/bug-14', 'refs/heads/bug-143', 'refs/heads/bug-27', 'refs/heads/bug-44', 'refs/heads/master']
+    expectedBranches = ['refs/heads/bug-14', 'refs/heads/bug-143', 'refs/heads/bug-27', 'refs/heads/bug-44']
     self.assertEquals(expectedBranches, branchNames)
 
   def findTestDir(self):

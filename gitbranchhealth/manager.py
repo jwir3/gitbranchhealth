@@ -33,6 +33,16 @@ class BranchManager:
 
     for branch in aRefList:
       branchName = self.getBranchPath(branch)
+
+      # Don't include branches that should be ignored.
+      shouldIgnore = False
+      for ignoredBranch in self.__getOptions().getIgnoredBranches():
+        if branchName.endswith("/" + ignoredBranch):
+          shouldIgnore = True
+          break
+      if shouldIgnore:
+        continue
+
       hasActivity = gitCmd.log('--abbrev-commit', '--date=relative', '-1', branchName)
       hasActivityNonRel = gitCmd.log('--abbrev-commit', '--date=iso', '-1', branchName)
       hasActivityLines = hasActivity.split('\n')

@@ -50,7 +50,7 @@ class BranchHealthOptions:
   Composition of all possible options for a given run of git branchhealth.
   """
 
-  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aDeleteOldBranches, aLog=None):
+  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aDeleteOldBranches, aIgnoredBranches=['master', 'HEAD'], aLog=None):
     """
     Initialize a new BranchHealthOptions object with parameters that were given
     from the command line.
@@ -63,10 +63,14 @@ class BranchHealthOptions:
     self.mRepo = Repo(self.mRepoPath)
     self.mLog = aLog
     self.mDeleteOldBranches = aDeleteOldBranches
+    self.__mIgnoredBranches = aIgnoredBranches
     self.__setupConfigOptions()
 
   def shouldDeleteOldBranches(self):
     return self.mDeleteOldBranches
+
+  def getIgnoredBranches(self):
+    return self.__mIgnoredBranches
 
   def getRepo(self):
     return self.mRepo
@@ -95,14 +99,12 @@ class BranchHealthOptions:
   def __setupConfigOptions(self):
     log = self.getLog()
     config = BranchHealthConfig(self.getRepo())
-    if log:
-      log.debug("Switch noColor: " + str(self.mNoColor))
-      log.debug("Config should use color: " + str(config.shouldUseColor()))
 
     self.mNoColor = not config.shouldUseColor() or self.mNoColor
 
-    if log:
-      log.debug("Should use color? " + str(self.shouldHaveColor))
+    if not config.shouldIgnoreBranches():
+      self.__mIgnoredBranches = []
+
 
 def showBranchHealth(aOptions):
   global gLog
@@ -209,7 +211,6 @@ def printBranchHealthChart(aBranchMap, aOptions):
   noColor = not aOptions.shouldHaveColor()
 
   log = gLog
-  log.debug("Should use color? " + str(not noColor))
 
   deleteBucket = []
   for branchTuple in aBranchMap:
@@ -269,6 +270,7 @@ def createParser():
                       dest='noColor')
   parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
   parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
+  parser.add_argument('--no-ignore', action='store_true', help='Do not ignore any branches (by default, "master" and "HEAD" from a given remote are ignored)', dest='noIgnore')
 
   return parser
 
@@ -289,7 +291,10 @@ def parseArguments():
   # Retrieve the git repository, if one wasn't given on the command line
   repo = parsed.repo
 
-  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld)
+  ignoredBranches = ['HEAD', 'master']
+  if parsed.noIgnore:
+    ignoredBranches = []
+  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
 
 def setupLog(aOptions):
   global gLog, DEBUG
