@@ -30,6 +30,17 @@ class ManagerTestSuite(unittest.TestCase):
     expectedBranches = ['bug-14', 'bug-143', 'bug-27', 'bug-44', 'master']
     self.assertEquals(expectedBranches, localBranches)
 
+  def test_get_branch_map(self):
+    manager = BranchManager(self.__mOptions)
+    repo = self.__mOptions.getRepo()
+    branchMap = manager.getBranchMap(repo.refs)
+    branchNames = []
+    for (branchName, lastActivity) in branchMap:
+      branchNames.append(branchName)
+
+    expectedBranches = ['refs/heads/bug-14', 'refs/heads/bug-143', 'refs/heads/bug-27', 'refs/heads/bug-44', 'refs/heads/master']
+    self.assertEquals(expectedBranches, branchNames)
+
   def findTestDir(self):
     # Find the file called 'testrepo.zip', starting at the current dir
     for (root, dirs, files) in os.walk('.'):
