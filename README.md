@@ -36,8 +36,9 @@ but they are also available to be passed in on the command line.
 
 If you choose to specify a configuration option, use the section header `[branchhealth]`.
 
-| Option Name |    Description    | Command Line Flag | Configuration File Option |
-| ----------- | ----------------- | :-----------------: | :-------------------------: |
-| No Branch Ignoring    | Specify that no branches should be ignored. Normally, all branches titled "HEAD" or "master" are ignored, as these are considered "special", and reporting/deletion should not happen on them. If this option is specified, these branches are included in reporting and deletion with all of the other branches. | --no-ignore | noignore |
-| No Color     | Specify not to use ANSI colors when printing the branch health results. | -n, --nocolor | nocolor |
-| Verbose Output | Make `gitbranchhealth` output as much information on the command line as possible. | -v | - |
+| Option Name |    Description    | Default Value |  Command Line Flag  |  Configuration File Option  |
+| ----------- | ----------------- | ------------- | :-----------------: | :-------------------------: |
+| No Branch Ignoring    | Specify that no branches should be ignored. Normally, all branches titled "HEAD" or "master" are ignored, as these are considered "special", and reporting/deletion should not happen on them. If this option is specified, these branches are included in reporting and deletion with all of the other branches. | N/A | --no-ignore | noignore |
+| No Color     | Specify not to use ANSI colors when printing the branch health results. | N/A | -n, --nocolor | nocolor |
+| Remote Name  | Specify the name of a remote repository on which to operate. | `None` (Operate on local repository only) | -r `<remote name>` | - |
+| Verbose Output | Make `gitbranchhealth` output as much information on the command line as possible. | N/A | -v | - |
