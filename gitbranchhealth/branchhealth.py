@@ -15,10 +15,6 @@ import sys
 import os
 
 from git import *
-from git.refs.head import Head
-from git.util import join_path
-from git.refs.remote import RemoteReference
-from git.refs.reference import Reference
 
 import argparse
 import sys
@@ -30,6 +26,7 @@ from config import BranchHealthConfig
 from util import hasGitDir
 from util import isGitRepo
 from util import isoDateComparator
+from manager import BranchManager
 
 # Use to turn on debugging output
 DEBUG = False
@@ -118,42 +115,17 @@ def showBranchHealth(aOptions):
 
   if log:
     log.debug('Operating on repository in: ' + repoPath)
-    log.debug('Operating on remote named: ' + remoteName)
+    log.debug('Operating on remote named: ' + str(remoteName))
 
-  remotePrefix = ''
-  if remoteName:
-    remotePrefix = 'remotes/' + remoteName + '/'
 
   repo = aOptions.getRepo()
 
-  gitCmd = Git(repoPath)
-  assert(repo.bare == False)
+  if remoteName:
+    manager = BranchManager(aOptions)
+    branchMap = manager.getBranchMapFromRemote(remoteName)
 
-  remoteToUse = None
-
-  for someRemote in repo.remotes:
-    if remoteName == someRemote.name:
-      remoteToUse = someRemote
-
-  if remoteToUse:
-    for branch in remoteToUse.refs:
-      branchName = remotePrefix + branch.remote_head
-      hasActivity = gitCmd.log('--abbrev-commit', '--date=relative', '-1', branchName)
-      hasActivityNonRel = gitCmd.log('--abbrev-commit', '--date=iso', '-1', branchName)
-      hasActivityLines = hasActivity.split('\n')
-      hasActivityNonRelLines = hasActivityNonRel.split('\n')
-      i = 0
-      for line in hasActivityLines:
-        if 'Date:' in line:
-          lastActivity = line.replace('Date: ', '').strip()
-          lastActivityNonRel = hasActivityNonRelLines[i].replace('Date: ', '').strip()
-          break
-        i = i + 1
-
-      branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
-
-    sortedBranches = sortBranchesByHealth(branchMap, aOptions.getHealthyDays())
-    printBranchHealthChart(sortedBranches, aOptions)
+  sortedBranches = sortBranchesByHealth(branchMap, aOptions.getHealthyDays())
+  printBranchHealthChart(sortedBranches, aOptions)
 
 
 # Sort a list of branch tuples by the date the last activity occurred on them.
@@ -266,43 +238,11 @@ def printBranchHealthChart(aBranchMap, aOptions):
     print(alignedPrintout)
 
   if aOptions.shouldDeleteOldBranches():
-    deleteAllOldBranches(deleteBucket, aOptions)
+    manager = BranchManager(aOptions)
+    manager.deleteAllOldBranches(deleteBucket)
 
 def splitBranchName(aBranchName):
   return aBranchName.split('/')
-
-def deleteOldBranch(aBranch, aOptions, aRemote='local', aShouldDeleteLocal=True):
-  # Cowardly refuse to remove the special 'master' branch
-  if aBranch.split('/')[-1] == 'master':
-    log.warn("Cowardly refusing to delete master branch")
-    return
-
-  log = aOptions.getLog()
-  repo = aOptions.getRepo()
-  if aRemote == 'local':
-    log.debug("Going to delete LOCAL branch: " + aBranch)
-    if aBranch.split('/')[-1] in repo.heads:
-      Head.delete(aBranch.split('/')[-1])
-  else:
-    log.debug("Going to delete REMOTE branch: " + aBranch)
-    branchRef = RemoteReference(repo, join_path('refs', aBranch))
-    log.debug("Ready to delete: " + str(branchRef))
-    RemoteReference.delete(aOptions.getRepo(), branchRef)
-
-    # Now, delete the corresponding local branch, if it exists
-    if aShouldDeleteLocal:
-      deleteOldBranch(branchRef.remote_head, aOptions)
-
-def deleteAllOldBranches(aBranchesToDelete, aOptions):
-  log = aOptions.getLog()
-  for branchToDelete in aBranchesToDelete:
-    (branchName, lastActivityRel, branchHealth) = branchToDelete
-    if branchName.startswith('refs/heads'):
-      deleteOldBranch(branchName, aOptions)
-    elif branchName.startswith('remotes'):
-      splitName = branchName.split('/')
-      remoteName = splitName[len(splitName) - 2]
-      deleteOldBranch(branchName, aOptions, remoteName, True)
 
 # Construct an argparse parser for use with this program to parse command
 # line arguments.
@@ -317,7 +257,7 @@ def createParser():
   parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
                       help='Output as much as possible')
   parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
-                      help='Operate on specified remote', default='origin',
+                      help='Operate on specified remote', default=None,
                       dest='remote')
   parser.add_argument('-b', '--bad-only', action='store_true',
                       help='Only show branches that are ready for pruning (i.e. older than numDays * 2)',

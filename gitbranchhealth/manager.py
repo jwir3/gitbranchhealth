@@ -12,6 +12,59 @@ from git.refs.reference import Reference
 class BranchManager:
   def __init__(self, aOptions):
     self.__mOptions = aOptions
+    self.__mBranchMap = []
+
+  def getPrefix(self, aRef):
+    if type(aRef) == RemoteReference:
+      return 'refs/remotes/'
+    return 'refs/heads/'
+
+  def getBranchPath(self, aRef):
+    branchName = self.getPrefix(aRef)
+    branchName = branchName + aRef.name
+    return branchName
+
+  def getBranchMap(self, aRefList):
+    branchMap = []
+
+    repo = self.__getOptions().getRepo()
+    assert(repo.bare == False)
+    gitCmd = repo.git
+
+    for branch in aRefList:
+      branchName = self.getBranchPath(branch)
+      hasActivity = gitCmd.log('--abbrev-commit', '--date=relative', '-1', branchName)
+      hasActivityNonRel = gitCmd.log('--abbrev-commit', '--date=iso', '-1', branchName)
+      hasActivityLines = hasActivity.split('\n')
+      hasActivityNonRelLines = hasActivityNonRel.split('\n')
+      i = 0
+      for line in hasActivityLines:
+        if 'Date:' in line:
+          lastActivity = line.replace('Date: ', '').strip()
+          lastActivityNonRel = hasActivityNonRelLines[i].replace('Date: ', '').strip()
+          break
+        i = i + 1
+
+      branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
+    return branchMap
+
+  def getBranchMapFromRemote(self, aRemoteName):
+    log = self.__getOptions()
+    if not aRemoteName:
+      log.warn("Cannot get branches from nameless remote")
+      return []
+
+    repo = self.__getOptions().getRepo()
+    assert(repo.bare == False)
+    gitCmd = repo.git
+
+    remoteToUse = None
+    for someRemote in repo.remotes:
+      if aRemoteName == someRemote.name:
+        remoteToUse = someRemote
+
+    remotePrefix = 'remotes/' + aRemoteName + '/'
+    return self.getBranchMap(remoteToUse.refs)
 
   def getLocalBranches(self):
     repo = self.__mOptions.getRepo()
