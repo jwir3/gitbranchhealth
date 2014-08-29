@@ -1,6 +1,6 @@
 from setuptools import setup
 import os
-from pip.req import parse_requirements
+import os.path
 
 progName = 'gitbranchhealth'
 progVersion = '0.2'
@@ -12,8 +12,9 @@ downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-
 entry_points = { 'console_scripts': [
   'git-branchhealth = gitbranchhealth.branchhealth:runMain',
 ]}
-installRequirements = parse_requirements("requirements.txt")
-reqs = [str(ir.req) for ir in installRequirements]
+reqFilePath = "requirements.txt"
+requirements_lines = [line.strip() for line in open(reqFilePath).readlines()]
+installRequires = list(filter(None, requirements_lines))
 
 setup(name=progName,
       version=progVersion,
@@ -24,5 +25,5 @@ setup(name=progName,
       packages=['gitbranchhealth'],
       entry_points=entry_points,
       test_suite='tests',
-      install_requires=reqs
+      install_requires=installRequires
 )
