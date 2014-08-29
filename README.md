@@ -39,6 +39,7 @@ If you choose to specify a configuration option, use the section header `[branch
 | Option Name |    Description    | Default Value |  Command Line Flag  |  Configuration File Option  |
 | ----------- | ----------------- | ------------- | :-----------------: | :-------------------------: |
 | Bad Branches Only | Show only branches that are identified as being "unhealthy". | N/A | -b, --bad-only | - |
+| Number of Healthy Days | Specify the number of days where a branch is considered "healthy" without any activity. After these number of days without activity, the branch will be marked as "somewhat unhealthy", and show up as yellow in the branch list. After 2*this number of days without activity, the branch will be marked as "unhealthy", and will be eligible for removal. | 14 | -d, --days | - |
 | No Branch Ignoring    | Specify that no branches should be ignored. Normally, all branches titled "HEAD" or "master" are ignored, as these are considered "special", and reporting/deletion should not happen on them. If this option is specified, these branches are included in reporting and deletion with all of the other branches. | N/A | --no-ignore | noignore |
 | No Color     | Specify not to use ANSI colors when printing the branch health results. | N/A | -n, --nocolor | nocolor |
 | Remote Name  | Specify the name of a remote repository on which to operate. | `None` (Operate on local repository only) | -r `<remote name>` | - |
