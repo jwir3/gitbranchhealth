@@ -38,6 +38,7 @@ If you choose to specify a configuration option, use the section header `[branch
 
 | Option Name |    Description    | Default Value |  Command Line Flag  |  Configuration File Option  |
 | ----------- | ----------------- | ------------- | :-----------------: | :-------------------------: |
+| Bad Branches Only | Show only branches that are identified as being "unhealthy". | N/A | -b, --bad-only | - |
 | No Branch Ignoring    | Specify that no branches should be ignored. Normally, all branches titled "HEAD" or "master" are ignored, as these are considered "special", and reporting/deletion should not happen on them. If this option is specified, these branches are included in reporting and deletion with all of the other branches. | N/A | --no-ignore | noignore |
 | No Color     | Specify not to use ANSI colors when printing the branch health results. | N/A | -n, --nocolor | nocolor |
 | Remote Name  | Specify the name of a remote repository on which to operate. | `None` (Operate on local repository only) | -r `<remote name>` | - |
