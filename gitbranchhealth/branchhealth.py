@@ -23,7 +23,7 @@ import dateutil.parser
 from colors import red, yellow, green
 
 from config import BranchHealthConfig
-from util import isoDateComparator
+from util import branchDateComparator
 from manager import BranchManager
 
 # Use to turn on debugging output
@@ -150,7 +150,7 @@ def showBranchHealth(aOptions):
 def sortBranchesByHealth(aBranchMap, aHealthyDays):
   global gLog
 
-  sortedBranchMap = sorted(aBranchMap, cmp=isoDateComparator)
+  sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
 
   return markBranchHealth(sortedBranchMap, aHealthyDays)
 

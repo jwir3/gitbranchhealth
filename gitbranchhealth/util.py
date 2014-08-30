@@ -1,7 +1,7 @@
 import os
 from os import path
 
-def isoDateComparator(aTupleList1, aTupleList2):
+def branchDateComparator(aTupleList1, aTupleList2):
   """
   Comparison function to compare two branch tuples.
 
