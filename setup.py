@@ -31,5 +31,6 @@ setup(name=progName,
       packages=['gitbranchhealth'],
       entry_points=entry_points,
       test_suite='tests',
+      license='Mozilla Public License v2.0',
       install_requires=requirements
 )
