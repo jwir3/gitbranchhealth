@@ -9,6 +9,8 @@ from git.util import join_path
 from git.refs.remote import RemoteReference
 from git.refs.reference import Reference
 
+from branch import Branch
+
 class BranchManager:
   def __init__(self, aOptions):
     self.__mOptions = aOptions
@@ -25,6 +27,7 @@ class BranchManager:
     return branchName
 
   def getBranchMap(self, aRefList):
+    log = self.__mOptions.getLog()
     branchMap = []
 
     repo = self.__getOptions().getRepo()
@@ -55,7 +58,9 @@ class BranchManager:
           break
         i = i + 1
 
-      branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
+      newBranch = Branch(branchName, lastActivityNonRel, lastActivity)
+      # branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
+      branchMap.append(newBranch)
     return branchMap
 
   def getBranchMapFromRemote(self, aRemoteName):

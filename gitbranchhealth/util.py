@@ -1,29 +1,27 @@
 import os
 from os import path
+from branch import Branch
 
-def branchDateComparator(aTupleList1, aTupleList2):
+def branchDateComparator(aBranch, aOther):
   """
   Comparison function to compare two branch tuples.
 
-  @param aTupleList1 A branch tuple containing the following:
-         1) The branch name and 2) A date tuple, with each tuple continaing the
-         following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-         iso-standardized date for comparison with other dates. Note that 2a and
-         2b should be equivalent, with 2a being less accurate, but more easily
-         interpretable by humans.
-  @param aTupleList2 A second branch tuple, with the same specification as
-         aTupleList1 which should be compared to aTupleList1.
+  @param aBranch A Branch object that has a last activity date, along with
+                 a relative last activity date.
+  @param aBranch Another Branch object that has a last activity date, along
+                 with a relative last activity date to compare to aBranch.
 
-  @returns -1, If the branch represented by aTupleList1 is older than the branch
-           represented by aTupleList2; 1 if the branch represented by
-           aTupleList2 is older than the branch represented by aTupleList1;
+  @returns -1, If the branch represented by aBranch is older than the branch
+           represented by aOther; 1 if the branch represented by
+           aOther is older than the branch represented by aBranch;
            0, otherwise.
   """
-  (branchName1, valueTuple1) = aTupleList1
-  (branchName2, valueTuple2) = aTupleList2
-
-  (humanDate1, isoDate1) = valueTuple1
-  (humanDate2, isoDate2) = valueTuple2
+  branchPath1 = aBranch.getPath()
+  branchPath2 = aOther.getPath()
+  humanDate1 = aBranch.getLastActivityRelativeToNow()
+  humanDate2 = aOther.getLastActivityRelativeToNow()
+  isoDate1 = aBranch.getLastActivity()
+  isoDate2 = aOther.getLastActivity()
 
   if isoDate1 < isoDate2:
     return -1

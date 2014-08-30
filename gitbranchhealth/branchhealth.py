@@ -22,6 +22,7 @@ from datetime import *
 import dateutil.parser
 from colors import red, yellow, green
 
+from branch import Branch
 from config import BranchHealthConfig
 from util import branchDateComparator
 from manager import BranchManager
@@ -173,9 +174,11 @@ def markBranchHealth(aBranchList, aHealthyDays):
   finalBranchList = []
   # Compute our time delta from when a branch is no longer considered
   # absolutely healthy, and when one should be pruned.
-  for branchTuple in aBranchList:
-    (branchName, dateTuple) = branchTuple
-    (humanDate, isoDate) = dateTuple
+  for someBranch in aBranchList:
+    branchPath = someBranch.getPath()
+    isoDate = someBranch.getLastActivity()
+    humanDate = someBranch.getLastActivityRelativeToNow()
+
     branchdate = dateutil.parser.parse(isoDate)
     branchLife = date.today() - branchdate.date()
     if branchLife > timedelta(aHealthyDays * 2):
@@ -185,7 +188,7 @@ def markBranchHealth(aBranchList, aHealthyDays):
     else:
       branchHealth = HEALTHY
 
-    finalBranchList.append((branchName, humanDate, branchHealth))
+    finalBranchList.append((branchPath, humanDate, branchHealth))
 
   return finalBranchList
 
