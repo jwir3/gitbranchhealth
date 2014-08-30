@@ -58,7 +58,7 @@ class BranchManager:
           break
         i = i + 1
 
-      newBranch = Branch(branchName, lastActivityNonRel, lastActivity)
+      newBranch = Branch(branchName, lastActivityNonRel)
       # branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
       branchMap.append(newBranch)
     return branchMap

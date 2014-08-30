@@ -1,3 +1,8 @@
+from datetime import timedelta
+from datetime import datetime
+from babel.dates import format_timedelta
+import dateutil.parser
+
 class Branch:
   """
   A Branch object consists of three components - the branch path, the last
@@ -5,9 +10,9 @@ class Branch:
   is displayed).
   """
 
-  def __init__(self, aBranchPath, aLastActivity, aLastActivityRelative):
-    self.__mLastActivity = aLastActivity
-    self.__mLastActivityRelative = aLastActivityRelative
+  def __init__(self, aBranchPath, aLastActivity):
+    self.__mLastActivityRelative = None
+    self.__mLastActivity = self.__parseDateFromString(aLastActivity)
     self.__mBranchPath = aBranchPath
 
   def __str__(self):
@@ -20,4 +25,16 @@ class Branch:
     return self.__mLastActivity
 
   def getLastActivityRelativeToNow(self):
-    return self.__mLastActivityRelative
+    if not self.__mLastActivityRelative:
+      self.__computeRelativeLastActivity()
+    return str(self.__mLastActivityRelative)
+
+  ## Private API ##
+
+  def __parseDateFromString(self, aDateString):
+    return dateutil.parser.parse(aDateString)
+
+  def __computeRelativeLastActivity(self):
+    curDateTime = datetime.now()
+    difference = curDateTime - self.__mLastActivity
+    self.__mLastActivityRelative = format_timedelta(difference) + " ago"

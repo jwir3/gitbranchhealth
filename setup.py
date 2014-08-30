@@ -17,7 +17,9 @@ requirements = [
   'argparse>=1.2.1',
   'nicelog>=0.1.7',
   'GitPython>=0.3.2.RC1',
-  'python-dateutil>=1.5'
+  'python-dateutil>=1.5',
+  'Babel>=1.3',
+  'python-dateutil==1.5'
 ]
 
 curDir = os.path.dirname(os.path.realpath(__file__))

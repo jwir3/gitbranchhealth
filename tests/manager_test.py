@@ -35,8 +35,8 @@ class ManagerTestSuite(unittest.TestCase):
     repo = self.__mOptions.getRepo()
     branchMap = manager.getBranchMap(repo.refs)
     branchNames = []
-    for (branchName, lastActivity) in branchMap:
-      branchNames.append(branchName)
+    for someBranch in branchMap:
+      branchNames.append(someBranch.getPath())
 
     expectedBranches = ['refs/heads/bug-14', 'refs/heads/bug-143', 'refs/heads/bug-27', 'refs/heads/bug-44']
     self.assertEquals(expectedBranches, branchNames)
