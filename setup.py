@@ -12,7 +12,8 @@ downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-
 entry_points = { 'console_scripts': [
   'git-branchhealth = gitbranchhealth.branchhealth:runMain',
 ]}
-reqFilePath = "requirements.txt"
+curDir = os.path.dirname(os.path.realpath(__file__))
+reqFilePath = os.path.join(curDir, "requirements.txt")
 requirements_lines = [line.strip() for line in open(reqFilePath).readlines()]
 installRequires = list(filter(None, requirements_lines))
 
