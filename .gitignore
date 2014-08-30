@@ -1,1 +1,4 @@
 *.pyc
+build/**
+dist/**
+gitbranchhealth.egg-info/**
