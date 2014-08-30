@@ -1,6 +1,5 @@
 import git.config
 import ConfigParser
-from util import walkUp
 import os.path
 
 class BranchHealthConfig:
