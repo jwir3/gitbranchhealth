@@ -3,12 +3,12 @@ import os
 import os.path
 
 progName = 'gitbranchhealth'
-progVersion = '0.2'
+progVersion = '0.2.1'
 progDescription='A tool for determining the health of branches in a git repository',
 progAuthor = 'Scott Johnson'
 progEmail = 'jaywir3@gmail.com'
 progUrl = 'http://github.com/jwir3/gitbranchhealth'
-downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-v0.2.tar.gz',
+downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-v0.2.1.tar.gz',
 entry_points = { 'console_scripts': [
   'git-branchhealth = gitbranchhealth.branchhealth:runMain',
 ]}
