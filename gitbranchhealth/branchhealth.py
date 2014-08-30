@@ -23,8 +23,6 @@ import dateutil.parser
 from colors import red, yellow, green
 
 from config import BranchHealthConfig
-from util import hasGitDir
-from util import isGitRepo
 from util import isoDateComparator
 from manager import BranchManager
 
