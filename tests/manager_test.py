@@ -1,26 +1,26 @@
 import unittest
 
 from gitbranchhealth.manager import BranchManager
-from gitbranchhealth.branchhealth import BranchHealthOptions
+from gitbranchhealth.branchhealth import BranchHealthConfig
 from testutil import GitRepoTest
 
 class ManagerTestSuite(GitRepoTest):
   def setUp(self):
     self.__mParent = super(ManagerTestSuite, self)
     self.__mParent.setUp()
-    self.__mOptions = self.__mParent.getOptions()
+    self.__mConfig = self.__mParent.getOptions()
     self.__mTempDir = self.__mParent.getTempDir()
 
   def test_manager_construction(self):
-    manager = BranchManager(self.__mOptions)
+    manager = BranchManager(self.__mConfig)
     localBranches = manager.getLocalBranchNames()
 
     expectedBranches = ['bug-14', 'bug-143', 'bug-27', 'bug-44', 'master']
     self.assertEquals(expectedBranches, localBranches)
 
   def test_get_branch_map(self):
-    manager = BranchManager(self.__mOptions)
-    repo = self.__mOptions.getRepo()
+    manager = BranchManager(self.__mConfig)
+    repo = self.__mConfig.getRepo()
     branchMap = manager.getBranchMap(repo.refs)
     branchNames = []
     for someBranch in branchMap:

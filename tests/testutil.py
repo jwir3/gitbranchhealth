@@ -4,7 +4,7 @@ import os
 from os.path import join
 import zipfile
 
-from gitbranchhealth.branchhealth import BranchHealthOptions
+from gitbranchhealth.branchhealth import BranchHealthConfig
 
 class GitRepoTest(unittest.TestCase):
   def setUp(self):
@@ -18,14 +18,14 @@ class GitRepoTest(unittest.TestCase):
       testRepoZip.extract(name, self.__mTempDir)
     zipFh.close()
     self.__mGitRepoPath = os.path.join(self.__mTempDir, 'testrepo')
-    self.__mOptions = BranchHealthOptions(self.__mGitRepoPath, 'origin', 1, False, False, False)
+    self.__mConfig = BranchHealthConfig(self.__mGitRepoPath)
 
   def getOptions(self):
-    return self.__mOptions
+    return self.__mConfig
 
   def getTempDir(self):
     return self.__mTempDir
-    
+
   def __findTestDir(self):
     # Find the file called 'testrepo.zip', starting at the current dir
     for (root, dirs, files) in os.walk('.'):

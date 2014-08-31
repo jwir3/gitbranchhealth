@@ -39,89 +39,28 @@ COLOR = True
 gLog = None
 gParser = None
 
-class BranchHealthOptions:
-  """
-  Composition of all possible options for a given run of git branchhealth.
-  """
-
-  def __init__(self, aRepoPath, aRemoteName, aNumDays, aBadOnly, aNoColor, aDeleteOldBranches, aIgnoredBranches=['master', 'HEAD'], aLog=None):
-    """
-    Initialize a new BranchHealthOptions object with parameters that were given
-    from the command line.
-    """
-    self.mRepoPath = aRepoPath
-    self.mRemoteName = aRemoteName
-    self.mNumDays = aNumDays
-    self.mBadOnly = aBadOnly
-    self.mNoColor = aNoColor
-    self.mRepo = Repo(self.mRepoPath)
-    self.mLog = aLog
-    self.mDeleteOldBranches = aDeleteOldBranches
-    self.__mIgnoredBranches = aIgnoredBranches
-    self.__setupConfigOptions()
-
-  def shouldDeleteOldBranches(self):
-    return self.mDeleteOldBranches
-
-  def getIgnoredBranches(self):
-    return self.__mIgnoredBranches
-
-  def getRepo(self):
-    return self.mRepo
-
-  def getRepoPath(self):
-    return self.mRepoPath
-
-  def getRemoteName(self):
-    return self.mRemoteName
-
-  def getHealthyDays(self):
-    return int(self.mNumDays)
-
-  def getBadOnly(self):
-    return self.mBadOnly
-
-  def shouldHaveColor(self):
-    return not self.mNoColor
-
-  def getLog(self):
-    return self.mLog
-
-  def setLog(self, aLog):
-    self.mLog = aLog
-
-  def __setupConfigOptions(self):
-    log = self.getLog()
-    config = BranchHealthConfig(self.getRepo())
-
-    self.mNoColor = not config.shouldUseColor() or self.mNoColor
-
-    if not config.shouldIgnoreBranches():
-      self.__mIgnoredBranches = []
-
-
-def showBranchHealth(aOptions):
+def showBranchHealth(aConfig):
   global gLog
   branchMap = []
 
   log = gLog
 
-  remoteName = aOptions.getRemoteName()
-  repoPath = aOptions.getRepoPath()
+  remoteName = aConfig.getRemoteName()
+  repoPath = aConfig.getRepoPath()
 
   if log:
     log.debug('Operating on repository in: ' + repoPath)
     log.debug('Operating on remote named: ' + str(remoteName))
 
 
-  repo = aOptions.getRepo()
+  repo = aConfig.getRepo()
 
   if remoteName:
-    manager = BranchManager(aOptions)
+    manager = BranchManager(aConfig)
     branchMap = manager.getBranchMapFromRemote(remoteName)
 
-  sortedBranches = sortBranchesByHealth(branchMap, aOptions.getHealthyDays())
-  printBranchHealthChart(sortedBranches, aOptions)
+  sortedBranches = sortBranchesByHealth(branchMap, aConfig.getHealthyDays())
+  printBranchHealthChart(sortedBranches, aConfig)
 
 
 # Sort a list of branch tuples by the date the last activity occurred on them.
@@ -190,12 +129,13 @@ def markBranchHealth(aBranchList, aHealthyDays):
 #        of a branch, 2) the last activity (in human readable format), and 3)
 #        the constant indicating the health of this branch, computed from
 #        the original, iso-standardized date.
-# @param aOptions Display options specified on the command line.
+# @param aConfig Branch health configuration object constructed during initial
+#        launch.
 
-def printBranchHealthChart(aBranchMap, aOptions):
+def printBranchHealthChart(aBranchMap, aConfig):
   global gLog
-  badOnly = aOptions.getBadOnly()
-  noColor = not aOptions.shouldHaveColor()
+  badOnly = aConfig.getBadOnly()
+  noColor = not aConfig.shouldHaveColor()
 
   log = gLog
 
@@ -225,8 +165,8 @@ def printBranchHealthChart(aBranchMap, aOptions):
     alignedPrintout = '{0:40} {1}'.format(branchName + ":", coloredDate)
     print(alignedPrintout)
 
-  if aOptions.shouldDeleteOldBranches():
-    manager = BranchManager(aOptions)
+  if aConfig.shouldDeleteOldBranches():
+    manager = BranchManager(aConfig)
     manager.deleteAllOldBranches(deleteBucket)
 
 def splitBranchName(aBranchName):
@@ -281,9 +221,9 @@ def parseArguments():
   ignoredBranches = ['HEAD', 'master']
   if parsed.noIgnore:
     ignoredBranches = []
-  return BranchHealthOptions(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
+  return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
 
-def setupLog(aOptions):
+def setupLog(aConfig):
   global gLog, DEBUG
 
   gLog = logging.getLogger("git-branchhealth")
@@ -298,7 +238,7 @@ def setupLog(aOptions):
 
   gLog.addHandler(handler)
 
-  aOptions.setLog(gLog)
+  aConfig.setLog(gLog)
 
 # Main entry point
 def runMain():

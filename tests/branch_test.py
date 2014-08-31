@@ -2,7 +2,7 @@ import unittest
 import os
 
 from gitbranchhealth.manager import BranchManager
-from gitbranchhealth.branchhealth import BranchHealthOptions
+from gitbranchhealth.branchhealth import BranchHealthConfig
 from gitbranchhealth.branch import Branch
 from testutil import GitRepoTest
 

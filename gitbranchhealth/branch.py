@@ -17,10 +17,10 @@ class Branch:
   AGED = 1
   OLD = 2
 
-  def __init__(self, aBranchPath, aOptions):
+  def __init__(self, aBranchPath, aConfig):
     self.__mLastActivityRelative = None
     self.__mBranchPath = aBranchPath
-    self.__mOptions = aOptions
+    self.__mConfig = aConfig
     self.__computeLastActivity()
 
   def __str__(self):
@@ -43,7 +43,7 @@ class Branch:
   ## Private API ##
 
   def __computeLastActivity(self):
-    repo = self.__mOptions.getRepo()
+    repo = self.__mConfig.getRepo()
     assert(repo.bare == False)
     gitCmd = repo.git
 

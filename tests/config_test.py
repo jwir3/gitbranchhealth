@@ -6,8 +6,7 @@ from git import Repo
 
 class BranchHealthTestSuite(unittest.TestCase):
   def test_config_color(self):
-      repo = Repo(".")
-      conf = BranchHealthConfig(repo)
+      conf = BranchHealthConfig('.')
       color = conf.shouldUseColor()
       self.assertTrue(color)
 

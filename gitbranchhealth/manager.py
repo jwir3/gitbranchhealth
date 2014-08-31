@@ -12,8 +12,8 @@ from git.refs.reference import Reference
 from branch import Branch
 
 class BranchManager:
-  def __init__(self, aOptions):
-    self.__mOptions = aOptions
+  def __init__(self, aConfig):
+    self.__mConfig = aConfig
     self.__mBranchMap = []
 
   def getPrefix(self, aRef):
@@ -27,7 +27,7 @@ class BranchManager:
     return branchName
 
   def getBranchMap(self, aRefList):
-    log = self.__mOptions.getLog()
+    log = self.__mConfig.getLog()
     branchMap = []
 
     for branch in aRefList:
@@ -74,7 +74,7 @@ class BranchManager:
     return branches
 
   def getLocalBranchNames(self):
-    repo = self.__mOptions.getRepo()
+    repo = self.__mConfig.getRepo()
     heads = [x.name for x in repo.branches]
     return heads
 
@@ -95,10 +95,10 @@ class BranchManager:
     Retrieve the options object that this BranchManager was instantiated
     with.
 
-    @return The BranchHealthOptions object that this BranchManager was created
+    @return The BranchHealthConfig object that this BranchManager was created
             with.
     """
-    return self.__mOptions
+    return self.__mConfig
 
   def __deleteOldBranch(self, aBranch, aRemote='local', aShouldDeleteLocal=True):
     log = self.__getOptions().getLog()
