@@ -6,7 +6,6 @@ import datetime
 import time
 
 from gitbranchhealth.branch import Branch
-from gitbranchhealth import timeutil
 
 class BranchTestSuite(unittest.TestCase):
   def setUp(self):
