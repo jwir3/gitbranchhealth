@@ -1,27 +1,15 @@
 import unittest
-from os.path import abspath
-from os.path import join
-import tempfile
-import os
-import zipfile
 
 from gitbranchhealth.manager import BranchManager
 from gitbranchhealth.branchhealth import BranchHealthOptions
+from testutil import GitRepoTest
 
-
-class ManagerTestSuite(unittest.TestCase):
+class ManagerTestSuite(GitRepoTest):
   def setUp(self):
-    self.__mTempDir = tempfile.mkdtemp(prefix='gitBranchHealthTest')
-    self.assertTrue(os.path.exists(self.__mTempDir))
-
-    testRepoZipPath = join(self.findTestDir(), 'testrepo.zip')
-    zipFh = open(testRepoZipPath, 'rb')
-    testRepoZip = zipfile.ZipFile(zipFh)
-    for name in testRepoZip.namelist():
-      testRepoZip.extract(name, self.__mTempDir)
-    zipFh.close()
-    self.__mGitRepoPath = os.path.join(self.__mTempDir, 'testrepo')
-    self.__mOptions = BranchHealthOptions(self.__mGitRepoPath, 'origin', 1, False, False, False)
+    self.__mParent = super(ManagerTestSuite, self)
+    self.__mParent.setUp()
+    self.__mOptions = self.__mParent.getOptions()
+    self.__mTempDir = self.__mParent.getTempDir()
 
   def test_manager_construction(self):
     manager = BranchManager(self.__mOptions)
@@ -40,12 +28,6 @@ class ManagerTestSuite(unittest.TestCase):
 
     expectedBranches = ['refs/heads/bug-14', 'refs/heads/bug-143', 'refs/heads/bug-27', 'refs/heads/bug-44']
     self.assertEquals(expectedBranches, branchNames)
-
-  def findTestDir(self):
-    # Find the file called 'testrepo.zip', starting at the current dir
-    for (root, dirs, files) in os.walk('.'):
-      if 'testrepo.zip' in files:
-        return root
 
 def allTests():
   unittest.main()
