@@ -30,10 +30,6 @@ class BranchManager:
     log = self.__mOptions.getLog()
     branchMap = []
 
-    repo = self.__getOptions().getRepo()
-    assert(repo.bare == False)
-    gitCmd = repo.git
-
     for branch in aRefList:
       branchName = self.getBranchPath(branch)
 
@@ -46,20 +42,7 @@ class BranchManager:
       if shouldIgnore:
         continue
 
-      hasActivity = gitCmd.log('--abbrev-commit', '--date=relative', '-1', branchName)
-      hasActivityNonRel = gitCmd.log('--abbrev-commit', '--date=iso', '-1', branchName)
-      hasActivityLines = hasActivity.split('\n')
-      hasActivityNonRelLines = hasActivityNonRel.split('\n')
-      i = 0
-      for line in hasActivityLines:
-        if 'Date:' in line:
-          lastActivity = line.replace('Date: ', '').strip()
-          lastActivityNonRel = hasActivityNonRelLines[i].replace('Date: ', '').strip()
-          break
-        i = i + 1
-
-      newBranch = Branch(branchName, lastActivityNonRel)
-      # branchMap.append((branchName, (lastActivity, lastActivityNonRel)))
+      newBranch = Branch(branchName, self.__getOptions())
       branchMap.append(newBranch)
     return branchMap
 
@@ -82,6 +65,15 @@ class BranchManager:
     return self.getBranchMap(remoteToUse.refs)
 
   def getLocalBranches(self):
+    branches = []
+    branchNames = self.getLocalBranchNames()
+    for branchName in branchNames:
+      branchPath = 'refs/heads/' + branchName
+      branch = Branch(branchPath, self.__getOptions())
+      branches.append(branch)
+    return branches
+
+  def getLocalBranchNames(self):
     repo = self.__mOptions.getRepo()
     heads = [x.name for x in repo.branches]
     return heads

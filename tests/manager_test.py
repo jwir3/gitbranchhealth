@@ -11,7 +11,7 @@ from gitbranchhealth.branchhealth import BranchHealthOptions
 
 class ManagerTestSuite(unittest.TestCase):
   def setUp(self):
-    self.__mTempDir = tempfile.mkdtemp(prefix='gitRiskTest')
+    self.__mTempDir = tempfile.mkdtemp(prefix='gitBranchHealthTest')
     self.assertTrue(os.path.exists(self.__mTempDir))
 
     testRepoZipPath = join(self.findTestDir(), 'testrepo.zip')
@@ -25,7 +25,7 @@ class ManagerTestSuite(unittest.TestCase):
 
   def test_manager_construction(self):
     manager = BranchManager(self.__mOptions)
-    localBranches = manager.getLocalBranches()
+    localBranches = manager.getLocalBranchNames()
 
     expectedBranches = ['bug-14', 'bug-143', 'bug-27', 'bug-44', 'master']
     self.assertEquals(expectedBranches, localBranches)

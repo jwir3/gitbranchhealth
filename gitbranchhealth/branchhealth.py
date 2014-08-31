@@ -36,11 +36,6 @@ VERBOSE = False
 # Whether or not color formatting should be turned on
 COLOR = True
 
-# Constants specifying branch health
-HEALTHY = 0
-AGED = 1
-OLD = 2
-
 gLog = None
 gParser = None
 
@@ -175,19 +170,10 @@ def markBranchHealth(aBranchList, aHealthyDays):
   # Compute our time delta from when a branch is no longer considered
   # absolutely healthy, and when one should be pruned.
   for someBranch in aBranchList:
+    someBranch.markHealth(aHealthyDays)
     branchPath = someBranch.getPath()
-    isoDate = someBranch.getLastActivity()
     humanDate = someBranch.getLastActivityRelativeToNow()
-
-    branchdate = dateutil.parser.parse(isoDate)
-    branchLife = date.today() - branchdate.date()
-    if branchLife > timedelta(aHealthyDays * 2):
-      branchHealth = OLD
-    elif branchLife > timedelta(aHealthyDays):
-      branchHealth = AGED
-    else:
-      branchHealth = HEALTHY
-
+    branchHealth = someBranch.getHealth()
     finalBranchList.append((branchPath, humanDate, branchHealth))
 
   return finalBranchList
@@ -219,17 +205,17 @@ def printBranchHealthChart(aBranchMap, aOptions):
 
     # If this is an unhealthy branch, then let's put it in the "delete"
     # bucket.
-    if branchHealth == OLD:
+    if branchHealth == Branch.OLD:
       deleteBucket.append(branchTuple)
 
     # Skip healthy and aged branches if we're only looking for bad ones
-    if badOnly and not branchHealth == OLD:
+    if badOnly and not branchHealth == Branch.OLD:
       continue
 
     if not noColor:
-      if branchHealth == HEALTHY:
+      if branchHealth == Branch.HEALTHY:
         coloredDate = green(lastActivityRel)
-      elif branchHealth == AGED:
+      elif branchHealth == Branch.AGED:
         coloredDate = yellow(lastActivityRel)
       else:
         coloredDate = red(lastActivityRel)
