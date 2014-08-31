@@ -54,7 +54,6 @@ class Branch:
       if 'Date:' in line:
         lastActivity = line.replace('Date: ', '').strip()
         lastActivityNonRel = hasActivityNonRelLines[i].replace('Date: ', '').strip()
-        print("Last activity: " + str(lastActivity))
         self.__mLastActivity = self.__parseDateFromString(lastActivityNonRel).astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
         break
       i = i + 1
