@@ -12,7 +12,7 @@ class BranchTestSuite(unittest.TestCase):
     pass
 
   def test_relative_last_activity(self):
-    curtime = datetime.datetime.now()
+    curTime = datetime.datetime.now()
     fiveDaysAgo = curTime + datetime.timedelta(-5)
     aboutOneWeekAgo = curTime + datetime.timedelta(-8)
     branchOneWeek = Branch("/path/to/anotherbranch", str(aboutOneWeekAgo))
