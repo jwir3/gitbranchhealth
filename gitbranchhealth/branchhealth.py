@@ -24,7 +24,6 @@ from colors import red, yellow, green
 
 from branch import Branch
 from config import BranchHealthConfig
-from util import branchDateComparator
 from manager import BranchManager
 
 class BranchHealthApplication:
@@ -76,6 +75,29 @@ class BranchHealthApplication:
     Print out the help (usage notes) for this application.
     """
     self.__mArgParser.print_help()
+
+  def showBranchHealth(self):
+    branchMap = []
+
+    config = self.getConfig()
+    log = config.getLog()
+    remoteName = config.getRemoteName()
+    repoPath = config.getRepoPath()
+
+    if log:
+      log.debug('Operating on repository in: ' + repoPath)
+      log.debug('Operating on remote named: ' + str(remoteName))
+
+    repo = config.getRepo()
+    manager = BranchManager(config)
+
+    if remoteName:
+      branchMap = manager.getBranchMapFromRemote(remoteName)
+    else:
+      branchMap = manager.getBranchMap(repo.heads)
+
+    sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
+    printBranchHealthChart(sortedBranches, config)
 
   def __createParser(self):
     """
@@ -129,79 +151,6 @@ class BranchHealthApplication:
     if parsed.noIgnore:
       ignoredBranches = []
     return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
-
-def showBranchHealth(aConfig):
-  branchMap = []
-
-  log = aConfig.getLog()
-  remoteName = aConfig.getRemoteName()
-  repoPath = aConfig.getRepoPath()
-
-  if log:
-    log.debug('Operating on repository in: ' + repoPath)
-    log.debug('Operating on remote named: ' + str(remoteName))
-
-  repo = aConfig.getRepo()
-
-  if remoteName:
-    manager = BranchManager(aConfig)
-    branchMap = manager.getBranchMapFromRemote(remoteName)
-
-  sortedBranches = sortBranchesByHealth(branchMap, aConfig.getHealthyDays())
-  printBranchHealthChart(sortedBranches, aConfig)
-
-
-# Sort a list of branch tuples by the date the last activity occurred on them.
-#
-# @param aBranchList A list of tuples, with each tuple having the following:
-#        1) The branch name and 2) A date tuple, with each tuple continaing the
-#        following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-#        iso-standardized date for comparison with other dates. Note that 2a and
-#        2b should be equivalent, with 2a being less accurate, but more easily
-#        interpretable by humans.
-# @param aHealthyDays The number of days that a branch can be untouched and
-#        still be considered 'healthy'.
-#
-# @returns A list of tuples, with each tuple having the following:
-#        1) The branch name and 2) A date tuple, with each tuple continaing the
-#        following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-#        iso-standardized date for comparison with other dates. Note that 2a and
-#        2b should be equivalent, with 2a being less accurate, but more easily
-#        interpretable by humans. This list is guaranteed to be sorted in non-
-#        ascending order, by the iso-standardized date (#2b, above).
-
-def sortBranchesByHealth(aBranchMap, aHealthyDays):
-  sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
-
-  return markBranchHealth(sortedBranchMap, aHealthyDays)
-
-# Traverse a list of branch tuples and mark their healthy status.
-#
-# @param aBranchList A list of tuples, with each tuple having the following:
-#        1) The branch name and 2) A date tuple, with each tuple continaing the
-#        following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-#        iso-standardized date for comparison with other dates. Note that 2a and
-#        2b should be equivalent, with 2a being less accurate, but more easily
-#        interpretable by humans.
-# @param aHealthyDays The number of days that a branch can be untouched and
-#        still be considered 'healthy'.
-#
-# @returns A list of simplified tuples, each containing: 1) the branch name,
-#          2) the human-readable date since last activity on the branch (#2a
-#          above), and 3) a constant indicating the health status of the branch
-
-def markBranchHealth(aBranchList, aHealthyDays):
-  finalBranchList = []
-  # Compute our time delta from when a branch is no longer considered
-  # absolutely healthy, and when one should be pruned.
-  for someBranch in aBranchList:
-    someBranch.markHealth(aHealthyDays)
-    branchPath = someBranch.getPath()
-    humanDate = someBranch.getLastActivityRelativeToNow()
-    branchHealth = someBranch.getHealth()
-    finalBranchList.append((branchPath, humanDate, branchHealth))
-
-  return finalBranchList
 
 # Print out a 'health chart' of different branches, and when they were last
 # changed. The health chart will color the given branches such that:
@@ -265,7 +214,7 @@ def runMain():
     context.printHelp()
     return
 
-  showBranchHealth(context.getConfig())
+  context.showBranchHealth()
 
 if __name__ == '__main__':
   runMain()
