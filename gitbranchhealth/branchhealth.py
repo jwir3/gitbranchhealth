@@ -27,31 +27,119 @@ from config import BranchHealthConfig
 from util import branchDateComparator
 from manager import BranchManager
 
-# Use to turn on debugging output
-DEBUG = False
+class BranchHealthApplication:
+  """
+  Application context that contains configuration and display data related to
+  the overall application. Can be instantiated as a standalone application, or
+  as a harness for testing.
+  """
 
-# Use to turn on verbose output
-VERBOSE = False
+  def __init__(self, aArguments=None):
+    """
+    Create a new BranchHealthApplication context.
 
-# Whether or not color formatting should be turned on
-COLOR = True
+    @param aConfig Configuration information to initialize the application.
+    @param aArguments Command line arguments to initialize the application with
+           if no arguments are given, default values will be assigned.
+    """
+    self.__mArgParser = self.__createParser()
 
-gLog = None
-gParser = None
+    if aArguments:
+      self.__mConfig = self.__parseArguments(aArguments)
+    else:
+      self.__mConfig = BranchHealthConfig('.')
+
+    self.__setupLogging()
+
+  def getConfig(self):
+    """
+    Retrieve the BranchHealthConfig object that determines the settings for this
+    context. These are a combination of command line arguments (if given) and git
+    configuration file options.
+
+    @returns A BranchHealthConfig object representing the settings for this
+             application context.
+    """
+    return self.__mConfig
+
+  def getLog(self):
+    """
+    Retrieve the logging object for this application context.
+
+    @returns A logging object which can be written to for this application
+             instance.
+    """
+    return self.getConfig().getLog()
+
+  def printHelp(self):
+    """
+    Print out the help (usage notes) for this application.
+    """
+    self.__mArgParser.print_help()
+
+  def __createParser(self):
+    """
+    Construct an argparse parser for use with this context to parse command
+    line arguments.
+
+    @returns An argparse parser object which can be used to parse command line
+             arguments, specific to git-branchhealth.
+    """
+
+    parser = argparse.ArgumentParser(description='''
+       Show health (time since creation) of git branches, in order.
+    ''', add_help=True)
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
+                        help='Output as much as possible')
+    parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
+                        help='Operate on specified remote', default=None,
+                        dest='remote')
+    parser.add_argument('-b', '--bad-only', action='store_true',
+                        help='Only show branches that are ready for pruning (i.e. older than numDays * 2)',
+                        dest='badOnly')
+    parser.add_argument('-d', '--days', action='store', dest='numDays',
+                        help='Specify number of days old where a branch is considered to no longer be \'healthy\'',
+                        default=14)
+    parser.add_argument('-n', '--nocolor', action='store_true', help="Don't use ANSI colors to display branch health",
+                        dest='noColor')
+    parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
+    parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
+    parser.add_argument('--no-ignore', action='store_true', help='Do not ignore any branches (by default, "master" and "HEAD" from a given remote are ignored)', dest='noIgnore')
+
+    return parser
+
+  def __setupLogging(self):
+    log = logging.getLogger("git-branchhealth")
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(ColorLineFormatter())
+    log.setLevel(logging.DEBUG)
+    handler.setLevel(logging.DEBUG)
+
+    log.addHandler(handler)
+
+    self.getConfig().setLog(log)
+
+  def __parseArguments(self, aArguments):
+    parsed = self.__mArgParser.parse_args(aArguments)
+
+    # Retrieve the git repository, if one wasn't given on the command line
+    repo = parsed.repo
+
+    ignoredBranches = ['HEAD', 'master']
+    if parsed.noIgnore:
+      ignoredBranches = []
+    return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
 
 def showBranchHealth(aConfig):
-  global gLog
   branchMap = []
 
-  log = gLog
-
+  log = aConfig.getLog()
   remoteName = aConfig.getRemoteName()
   repoPath = aConfig.getRepoPath()
 
   if log:
     log.debug('Operating on repository in: ' + repoPath)
     log.debug('Operating on remote named: ' + str(remoteName))
-
 
   repo = aConfig.getRepo()
 
@@ -83,8 +171,6 @@ def showBranchHealth(aConfig):
 #        ascending order, by the iso-standardized date (#2b, above).
 
 def sortBranchesByHealth(aBranchMap, aHealthyDays):
-  global gLog
-
   sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
 
   return markBranchHealth(sortedBranchMap, aHealthyDays)
@@ -133,11 +219,10 @@ def markBranchHealth(aBranchList, aHealthyDays):
 #        launch.
 
 def printBranchHealthChart(aBranchMap, aConfig):
-  global gLog
   badOnly = aConfig.getBadOnly()
-  noColor = not aConfig.shouldHaveColor()
+  noColor = not aConfig.shouldUseColor()
 
-  log = gLog
+  log = aConfig.getLog()
 
   deleteBucket = []
   for branchTuple in aBranchMap:
@@ -172,86 +257,15 @@ def printBranchHealthChart(aBranchMap, aConfig):
 def splitBranchName(aBranchName):
   return aBranchName.split('/')
 
-# Construct an argparse parser for use with this program to parse command
-# line arguments.
-#
-# @returns An argparse parser object which can be used to parse command line
-#          arguments, specific to git-branchhealth.
-
-def createParser():
-  parser = argparse.ArgumentParser(description='''
-     Show health (time since creation) of git branches, in order.
-  ''', add_help=True)
-  parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
-                      help='Output as much as possible')
-  parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
-                      help='Operate on specified remote', default=None,
-                      dest='remote')
-  parser.add_argument('-b', '--bad-only', action='store_true',
-                      help='Only show branches that are ready for pruning (i.e. older than numDays * 2)',
-                      dest='badOnly')
-  parser.add_argument('-d', '--days', action='store', dest='numDays',
-                      help='Specify number of days old where a branch is considered to no longer be \'healthy\'',
-                      default=14)
-  parser.add_argument('-n', '--nocolor', action='store_true', help="Don't use ANSI colors to display branch health",
-                      dest='noColor')
-  parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
-  parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
-  parser.add_argument('--no-ignore', action='store_true', help='Do not ignore any branches (by default, "master" and "HEAD" from a given remote are ignored)', dest='noIgnore')
-
-  return parser
-
-# Parse arguments given on the command line. Uses the argparse package to
-# perform this task.
-def parseArguments():
-  global gParser, gLog, VERBOSE, DEBUG
-
-  if not gParser:
-    gParser = createParser()
-
-    parsed = gParser.parse_args(sys.argv[1:])
-
-  if parsed.verbose:
-    VERBOSE=True
-    DEBUG=True
-
-  # Retrieve the git repository, if one wasn't given on the command line
-  repo = parsed.repo
-
-  ignoredBranches = ['HEAD', 'master']
-  if parsed.noIgnore:
-    ignoredBranches = []
-  return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
-
-def setupLog(aConfig):
-  global gLog, DEBUG
-
-  gLog = logging.getLogger("git-branchhealth")
-  handler = logging.StreamHandler(sys.stderr)
-  handler.setFormatter(ColorLineFormatter())
-  if DEBUG:
-    gLog.setLevel(logging.DEBUG)
-    handler.setLevel(logging.DEBUG)
-  else:
-    gLog.setLevel(logging.ERROR)
-    handler.setLevel(logging.ERROR)
-
-  gLog.addHandler(handler)
-
-  aConfig.setLog(gLog)
-
 # Main entry point
 def runMain():
-  global gParser, gLog, DEBUG, VERBOSE
+  context = BranchHealthApplication(sys.argv[1:])
 
-  options = parseArguments()
-  setupLog(options)
-
-  if options.getRepoPath() == None:
-    gParser.print_help()
+  if context.getConfig().getRepoPath() == None:
+    context.printHelp()
     return
 
-  showBranchHealth(options)
+  showBranchHealth(context.getConfig())
 
 if __name__ == '__main__':
   runMain()
