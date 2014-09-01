@@ -12,37 +12,57 @@ from git.refs.reference import Reference
 from branch import Branch
 
 class BranchManager:
+  """
+  Object used to manage Branch objects. This is the primary workhorse of the
+  branch health processing algorithm. Each branch is associated with a given
+  healthiness state, and this object does that association.
+  """
   def __init__(self, aConfig):
     self.__mConfig = aConfig
     self.__mBranchMap = []
 
   def getPrefix(self, aRef):
+    """
+    Retrieve the prefix of the git path for a given Reference object. If this is
+    a remote reference, this will be 'refs/remotes/', otherwise this will be
+    'refs/heads/'.
+
+    @param aRef The Reference object for which the prefix should be retrieved.
+
+    @returns A string for the prefix of the git path to the reference.
+    """
     if type(aRef) == RemoteReference:
       return 'refs/remotes/'
     return 'refs/heads/'
 
-  def getBranchPath(self, aRef):
-    branchName = self.getPrefix(aRef)
-    branchName = branchName + aRef.name
-    return branchName
-
   def getBranchMap(self, aRefList):
+    """
+    Retrieve the branch map for this manager. The branch map is a list of Branch
+    objects, each mapping a ref path to a healthy/aged/old status.
+
+    @param aRefList A list of Reference objects that should be processed and
+           mapped to healthy statuses.
+
+    @returns A list of Branch objects, each of which maps one Reference in aRefList
+             to a health status.
+    """
     log = self.__mConfig.getLog()
     branchMap = []
 
     for branch in aRefList:
-      branchName = self.getBranchPath(branch)
+      branchPath = branch.path
+      branchName = branchPath.split('/')[-1]
 
       # Don't include branches that should be ignored.
       shouldIgnore = False
       for ignoredBranch in self.__getOptions().getIgnoredBranches():
-        if branchName.endswith("/" + ignoredBranch):
+        if branchName == ignoredBranch:
           shouldIgnore = True
           break
       if shouldIgnore:
         continue
 
-      newBranch = Branch(branchName, self.__getOptions())
+      newBranch = Branch(branchPath, self.__getOptions())
       branchMap.append(newBranch)
     return branchMap
 
