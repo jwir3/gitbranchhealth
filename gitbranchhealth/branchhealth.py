@@ -207,9 +207,6 @@ class BranchHealthApplication:
       manager = BranchManager(config)
       manager.deleteAllOldBranches(deleteBucket)
 
-def splitBranchName(aBranchName):
-  return aBranchName.split('/')
-
 # Main entry point
 def runMain():
   context = BranchHealthApplication(sys.argv[1:])
