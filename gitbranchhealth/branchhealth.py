@@ -116,9 +116,6 @@ class BranchHealthApplication:
     ''', add_help=True)
     parser.add_argument('-v', action='count', dest='logLevel',
                         help='Specify how verbose the output should be (-v to -vvv)')
-    parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
-                        help='Operate on specified remote', default=None,
-                        dest='remote')
     parser.add_argument('-b', '--bad-only', action='store_true',
                         help='Only show branches that are ready for pruning (i.e. older than numDays * 2)',
                         dest='badOnly')
@@ -130,6 +127,15 @@ class BranchHealthApplication:
     parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
     parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
     parser.add_argument('--no-ignore', action='store_true', help='Do not ignore any branches (by default, "master" and "HEAD" from a given remote are ignored)', dest='noIgnore')
+
+    # Make sure that only one of -r and --all-remotes is specified
+    remoteGroup = parser.add_mutually_exclusive_group()
+    remoteGroup.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
+                             help='Operate on specified remote', default=None,
+                             dest='remote')
+    remoteGroup.add_argument('--all-remotes', action='store_true', dest='allRemotes',
+                             help='Run a branch health check for all remotes, including local branches')
+
 
     return parser
 
@@ -159,7 +165,13 @@ class BranchHealthApplication:
 
     possibleLogLevels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
 
-    return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches, possibleLogLevels[logLevel])
+    remote = 'local'
+    if parsed.remote:
+      remote = parsed.remote
+    elif parsed.allRemotes:
+      remote = 'all'
+
+    return BranchHealthConfig(repo, remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches, possibleLogLevels[logLevel])
 
   def __printBranchHealthChart(self, aBranchMap, aStream):
     """
