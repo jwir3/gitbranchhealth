@@ -40,6 +40,9 @@ class Branch:
   def getHealth(self):
     return self.__mHealth
 
+  def getName(self):
+    return self.getPath().split('/')[-1]
+
   ## Private API ##
 
   def __computeLastActivity(self):

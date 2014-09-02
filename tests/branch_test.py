@@ -4,6 +4,7 @@ import os
 from gitbranchhealth.manager import BranchManager
 from gitbranchhealth.branchhealth import BranchHealthConfig
 from gitbranchhealth.branch import Branch
+from gitbranchhealth.util import branchDateComparator
 from testutil import GitRepoTest
 
 
@@ -20,6 +21,13 @@ class BranchTestSuite(GitRepoTest):
   #   branchFiveDays = Branch("/path/to/branch", str(fiveDaysAgo))
   #   self.assertEqual('5 days ago', branchFiveDays.getLastActivityRelativeToNow())
   #   self.assertEquals('1 week ago', branchOneWeek.getLastActivityRelativeToNow())
+
+  def test_branch_sorting(self):
+    options = self.__mParent.getOptions()
+    manager = BranchManager(options)
+    branches = [x.getName() for x in sorted(manager.getLocalBranches(), branchDateComparator)]
+    expectedBranches = ['bug-14', 'bug-44', 'bug-27', 'bug-143', 'master']
+    self.assertEqual(expectedBranches, branches)
 
   def test_mark_branch_health(self):
     options = self.__mParent.getOptions()

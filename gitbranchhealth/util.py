@@ -4,7 +4,7 @@ from branch import Branch
 
 def branchDateComparator(aBranch, aOther):
   """
-  Comparison function to compare two branch tuples.
+  Comparison function to compare two Branch objects.
 
   @param aBranch A Branch object that has a last activity date, along with
                  a relative last activity date.
