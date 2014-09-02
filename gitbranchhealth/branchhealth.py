@@ -97,7 +97,7 @@ class BranchHealthApplication:
       branchMap = manager.getBranchMap(repo.heads)
 
     sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
-    printBranchHealthChart(sortedBranches, config)
+    self.__printBranchHealthChart(sortedBranches)
 
   def __createParser(self):
     """
@@ -142,6 +142,13 @@ class BranchHealthApplication:
     self.getConfig().setLog(log)
 
   def __parseArguments(self, aArguments):
+    """
+    Parse command line arguments given to this application.
+
+    :returns: A BranchHealthConfig object populated with the values from the command
+              line arguments, as well as the values from the git configuration file
+              for a given repository (if it exists).
+    """
     parsed = self.__mArgParser.parse_args(aArguments)
 
     # Retrieve the git repository, if one wasn't given on the command line
@@ -152,56 +159,57 @@ class BranchHealthApplication:
       ignoredBranches = []
     return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
 
-# Print out a 'health chart' of different branches, and when they were last
-# changed. The health chart will color the given branches such that:
-#     - Branches with last activity longer than double the number of 'healthy
-#       days' ago will be colored in RED.
-#     - Branches with last activity longer than the number of 'healthy days'
-#       ago will be colored in YELLOW.
-#     - All other branches will be colored in GREEN
-#
-# @param aBranchMap A list of tuples where each tuple contains 1) the name
-#        of a branch, 2) the last activity (in human readable format), and 3)
-#        the constant indicating the health of this branch, computed from
-#        the original, iso-standardized date.
-# @param aConfig Branch health configuration object constructed during initial
-#        launch.
+  def __printBranchHealthChart(self, aBranchMap):
+    """
+    Print out a 'health chart' of different branches and when they were last
+    changed. The health chart will color the given branches such that:
+        - Branches with last activity longer than double the number of 'healthy
+          days' ago will be colored in RED.
+        - Branches with last activity longer than the number of 'healthy days'
+          ago will be colored in YELLOW.
+        - All other branches will be colored in GREEN
 
-def printBranchHealthChart(aBranchMap, aConfig):
-  badOnly = aConfig.getBadOnly()
-  noColor = not aConfig.shouldUseColor()
+    @param aBranchMap A list of Branch objects. Note that this list is assumed to
+           be pre-sorted in the order in which they should be output.
+    """
 
-  log = aConfig.getLog()
+    config = self.getConfig()
+    badOnly = config.getBadOnly()
+    noColor = not config.shouldUseColor()
 
-  deleteBucket = []
-  for branchTuple in aBranchMap:
-    (branchName, lastActivityRel, branchHealth) = branchTuple
+    log = config.getLog()
 
-    # If this is an unhealthy branch, then let's put it in the "delete"
-    # bucket.
-    if branchHealth == Branch.OLD:
-      deleteBucket.append(branchTuple)
+    deleteBucket = []
+    for someBranch in aBranchMap:
+      branchPath = someBranch.getPath()
+      branchHealth = someBranch.getHealth()
+      lastActivityRel = someBranch.getLastActivityRelativeToNow()
 
-    # Skip healthy and aged branches if we're only looking for bad ones
-    if badOnly and not branchHealth == Branch.OLD:
-      continue
+      # If this is an unhealthy branch, then let's put it in the "delete"
+      # bucket.
+      if branchHealth == Branch.OLD:
+        deleteBucket.append(someBranch)
 
-    if not noColor:
-      if branchHealth == Branch.HEALTHY:
-        coloredDate = green(lastActivityRel)
-      elif branchHealth == Branch.AGED:
-        coloredDate = yellow(lastActivityRel)
+      # Skip healthy and aged branches if we're only looking for bad ones
+      if badOnly and not branchHealth == Branch.OLD:
+        continue
+
+      if not noColor:
+        if branchHealth == Branch.HEALTHY:
+          coloredDate = green(lastActivityRel)
+        elif branchHealth == Branch.AGED:
+          coloredDate = yellow(lastActivityRel)
+        else:
+          coloredDate = red(lastActivityRel)
       else:
-        coloredDate = red(lastActivityRel)
-    else:
-        coloredDate = lastActivityRel
+          coloredDate = lastActivityRel
 
-    alignedPrintout = '{0:40} {1}'.format(branchName + ":", coloredDate)
-    print(alignedPrintout)
+      alignedPrintout = '{0:40} {1}'.format(branchPath + ":", coloredDate)
+      print(alignedPrintout)
 
-  if aConfig.shouldDeleteOldBranches():
-    manager = BranchManager(aConfig)
-    manager.deleteAllOldBranches(deleteBucket)
+    if config.shouldDeleteOldBranches():
+      manager = BranchManager(config)
+      manager.deleteAllOldBranches(deleteBucket)
 
 def splitBranchName(aBranchName):
   return aBranchName.split('/')

@@ -164,20 +164,15 @@ class BranchManager:
 
   def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
     """
-    Sort a list of branch tuples by the date the last activity occurred on them.
+    Sort a list of Branch objects by the date the last activity occurred on them.
 
     :param aBranchMap: A list of Branch objects that map Reference objects to
                        a "healthy" status.
     :param aHealthyDays: The number of days that a branch can be untouched and
                          still be considered 'healthy'.
 
-    :return: A list of tuples, with each tuple having the following:
-             1) The branch name and 2) A date tuple, with each tuple continaing the
-             following: 2a) A human-readable date (e.g. '2 days ago'), and 2b) an
-             iso-standardized date for comparison with other dates. Note that 2a and
-             2b should be equivalent, with 2a being less accurate, but more easily
-             interpretable by humans. This list is guaranteed to be sorted in non-
-             ascending order, by the iso-standardized date (#2b, above).
+    :return: A list of Branch objects, guaranteed to be sorted in non-
+             ascending order, by the iso-standardized date of last activity.
     """
     sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
 
@@ -187,7 +182,7 @@ class BranchManager:
       branchPath = someBranch.getPath()
       humanDate = someBranch.getLastActivityRelativeToNow()
       branchHealth = someBranch.getHealth()
-      finalBranchList.append((branchPath, humanDate, branchHealth))
+      finalBranchList.append(someBranch)
 
     return finalBranchList
 
