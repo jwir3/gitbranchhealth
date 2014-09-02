@@ -9,7 +9,6 @@
 # https://coderwall.com/p/g-1n9w
 #
 
-from nicelog.formatters import ColorLineFormatter
 import logging
 import sys
 import os
@@ -46,9 +45,7 @@ class BranchHealthApplication:
     if aArguments:
       self.__mConfig = self.__parseArguments(aArguments)
     else:
-      self.__mConfig = BranchHealthConfig('.')
-
-    self.__setupLogging()
+      self.__mConfig = BranchHealthConfig('.', aLogLevel=0)
 
   def getConfig(self):
     """
@@ -111,8 +108,8 @@ class BranchHealthApplication:
     parser = argparse.ArgumentParser(description='''
        Show health (time since creation) of git branches, in order.
     ''', add_help=True)
-    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
-                        help='Output as much as possible')
+    parser.add_argument('-v', action='count', dest='logLevel',
+                        help='Specify how verbose the output should be (-v to -vvv)')
     parser.add_argument('-r', '--remote', metavar=('<remote name>'), action='store',
                         help='Operate on specified remote', default=None,
                         dest='remote')
@@ -130,17 +127,6 @@ class BranchHealthApplication:
 
     return parser
 
-  def __setupLogging(self):
-    log = logging.getLogger("git-branchhealth")
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setFormatter(ColorLineFormatter())
-    log.setLevel(logging.DEBUG)
-    handler.setLevel(logging.DEBUG)
-
-    log.addHandler(handler)
-
-    self.getConfig().setLog(log)
-
   def __parseArguments(self, aArguments):
     """
     Parse command line arguments given to this application.
@@ -157,7 +143,17 @@ class BranchHealthApplication:
     ignoredBranches = ['HEAD', 'master']
     if parsed.noIgnore:
       ignoredBranches = []
-    return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches)
+
+    logLevel = parsed.logLevel
+    if not logLevel:
+      logLevel = 0
+
+    if logLevel > 3:
+      logLevel = 3
+
+    possibleLogLevels = [logging.ERROR, logging.WARN, logging.INFO, logging.DEBUG]
+
+    return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches, possibleLogLevels[logLevel])
 
   def __printBranchHealthChart(self, aBranchMap):
     """

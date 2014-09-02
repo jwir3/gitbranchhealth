@@ -2,13 +2,17 @@ import git.config
 from git import Repo
 import ConfigParser
 import os.path
+import sys
+from nicelog.formatters import ColorLineFormatter
+import logging
+
 
 class BranchHealthConfig:
   """
   Composition of all possible options for a given run of git branchhealth.
   """
 
-  def __init__(self, aRepoPath, aRemoteName='', aNumDays=14, aBadOnly=False, aNoColor=False, aDeleteOldBranches=False, aIgnoredBranches=['master', 'HEAD'], aLog=None):
+  def __init__(self, aRepoPath, aRemoteName='', aNumDays=14, aBadOnly=False, aNoColor=False, aDeleteOldBranches=False, aIgnoredBranches=['master', 'HEAD'], aLogLevel=logging.ERROR):
     """
     Initialize a new BranchHealthConfig object with parameters that were given
     from the command line.
@@ -19,8 +23,9 @@ class BranchHealthConfig:
     self.mBadOnly = aBadOnly
     self.mNoColor = aNoColor
     self.mRepo = Repo(self.mRepoPath)
-    self.mLog = aLog
     self.mDeleteOldBranches = aDeleteOldBranches
+
+    self.__setupLogging(aLogLevel)
 
     self.__mIgnoredBranches = aIgnoredBranches
     self.__setupConfigOptions()
@@ -50,12 +55,20 @@ class BranchHealthConfig:
     return not self.mNoColor
 
   def getLog(self):
-    return self.mLog
-
-  def setLog(self, aLog):
-    self.mLog = aLog
+    return self.__mLog
 
   ## Private API ##
+
+  def __setupLogging(self, aLogLevel=logging.DEBUG):
+    log = logging.getLogger("git-branchhealth")
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(ColorLineFormatter())
+    log.setLevel(aLogLevel)
+    handler.setLevel(aLogLevel)
+
+    log.addHandler(handler)
+
+    self.__mLog = log
 
   def __setupParser(self):
     self.mParser = git.config.SectionConstraint(self.getRepo().config_reader(), 'branchhealth')
