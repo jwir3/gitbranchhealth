@@ -47,6 +47,35 @@ class BranchHealthApplication:
     else:
       self.__mConfig = BranchHealthConfig('.', aLogLevel=0)
 
+  def showBranchHealth(self, aStream=sys.stdout):
+    """
+    Output the health of all branches from the branch map given in the BranchManager.
+    This displays the branches in descending order of last activity age.
+
+    :param aStream: An output stream to send the output to.
+    """
+    branchMap = []
+
+    config = self.getConfig()
+    log = config.getLog()
+    remoteName = config.getRemoteName()
+    repoPath = config.getRepoPath()
+
+    if log:
+      log.debug('Operating on repository in: ' + repoPath)
+      log.debug('Operating on remote named: ' + str(remoteName))
+
+    repo = config.getRepo()
+    manager = BranchManager(config)
+
+    if remoteName:
+      branchMap = manager.getBranchMapFromRemote(remoteName)
+    else:
+      branchMap = manager.getBranchMap(repo.heads)
+
+    sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
+    self.__printBranchHealthChart(sortedBranches, aStream)
+
   def getConfig(self):
     """
     Retrieve the BranchHealthConfig object that determines the settings for this
@@ -72,29 +101,6 @@ class BranchHealthApplication:
     Print out the help (usage notes) for this application.
     """
     self.__mArgParser.print_help()
-
-  def showBranchHealth(self):
-    branchMap = []
-
-    config = self.getConfig()
-    log = config.getLog()
-    remoteName = config.getRemoteName()
-    repoPath = config.getRepoPath()
-
-    if log:
-      log.debug('Operating on repository in: ' + repoPath)
-      log.debug('Operating on remote named: ' + str(remoteName))
-
-    repo = config.getRepo()
-    manager = BranchManager(config)
-
-    if remoteName:
-      branchMap = manager.getBranchMapFromRemote(remoteName)
-    else:
-      branchMap = manager.getBranchMap(repo.heads)
-
-    sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
-    self.__printBranchHealthChart(sortedBranches)
 
   def __createParser(self):
     """
@@ -155,7 +161,7 @@ class BranchHealthApplication:
 
     return BranchHealthConfig(repo, parsed.remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches, possibleLogLevels[logLevel])
 
-  def __printBranchHealthChart(self, aBranchMap):
+  def __printBranchHealthChart(self, aBranchMap, aStream):
     """
     Print out a 'health chart' of different branches and when they were last
     changed. The health chart will color the given branches such that:
@@ -165,8 +171,9 @@ class BranchHealthApplication:
           ago will be colored in YELLOW.
         - All other branches will be colored in GREEN
 
-    @param aBranchMap A list of Branch objects. Note that this list is assumed to
-           be pre-sorted in the order in which they should be output.
+    :param aBranchMap: A list of Branch objects. Note that this list is assumed to
+                       be pre-sorted in the order in which they should be output.
+    :param aStream: An output stream to print the data to.
     """
 
     config = self.getConfig()
@@ -200,8 +207,8 @@ class BranchHealthApplication:
       else:
           coloredDate = lastActivityRel
 
-      alignedPrintout = '{0:40} {1}'.format(branchPath + ":", coloredDate)
-      print(alignedPrintout)
+      alignedPrintout = '{0:40} {1}\n'.format(branchPath + ":", coloredDate)
+      aStream.write(alignedPrintout)
 
     if config.shouldDeleteOldBranches():
       manager = BranchManager(config)
