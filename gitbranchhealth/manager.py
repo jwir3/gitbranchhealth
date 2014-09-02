@@ -131,6 +131,30 @@ class BranchManager:
     heads = [x.name for x in repo.branches]
     return heads
 
+def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
+  """
+  Sort a list of Branch objects by the date the last activity occurred on them.
+
+  :param aBranchMap: A list of Branch objects that map Reference objects to
+                     a "healthy" status.
+  :param aHealthyDays: The number of days that a branch can be untouched and
+                       still be considered 'healthy'.
+
+  :return: A list of Branch objects, guaranteed to be sorted in non-
+           ascending order, by the iso-standardized date of last activity.
+  """
+  sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
+
+  finalBranchList = []
+  for someBranch in sortedBranchMap:
+    someBranch.markHealth(aHealthyDays)
+    branchPath = someBranch.getPath()
+    humanDate = someBranch.getLastActivityRelativeToNow()
+    branchHealth = someBranch.getHealth()
+    finalBranchList.append(someBranch)
+
+  return finalBranchList
+
   def deleteAllOldBranches(self, aBranchesToDelete):
     """
     Remove branches specified by name from both the local repository and the
@@ -151,7 +175,8 @@ class BranchManager:
         remoteName = splitName[len(splitName) - 2]
         self.__deleteOldBranch(branchName, remoteName, True)
 
-  # Private API
+  ## Private API ##
+
   def __getOptions(self):
     """
     Retrieve the options object that this BranchManager was instantiated
@@ -161,30 +186,6 @@ class BranchManager:
              with.
     """
     return self.__mConfig
-
-  def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
-    """
-    Sort a list of Branch objects by the date the last activity occurred on them.
-
-    :param aBranchMap: A list of Branch objects that map Reference objects to
-                       a "healthy" status.
-    :param aHealthyDays: The number of days that a branch can be untouched and
-                         still be considered 'healthy'.
-
-    :return: A list of Branch objects, guaranteed to be sorted in non-
-             ascending order, by the iso-standardized date of last activity.
-    """
-    sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
-
-    finalBranchList = []
-    for someBranch in sortedBranchMap:
-      someBranch.markHealth(aHealthyDays)
-      branchPath = someBranch.getPath()
-      humanDate = someBranch.getLastActivityRelativeToNow()
-      branchHealth = someBranch.getHealth()
-      finalBranchList.append(someBranch)
-
-    return finalBranchList
 
   def __deleteOldBranch(self, aBranch, aRemote='local', aShouldDeleteLocal=True):
     """
