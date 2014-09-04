@@ -20,7 +20,7 @@ class GitRepoTest(unittest.TestCase):
     self.__mGitRepoPath = os.path.join(self.__mTempDir, 'testrepo')
     self.__mConfig = BranchHealthConfig(self.__mGitRepoPath)
 
-  def getOptions(self):
+  def getConfig(self):
     return self.__mConfig
 
   def getTempDir(self):

@@ -27,7 +27,19 @@ class BranchManager:
                     configuration options for the new instance.
     """
     self.__mConfig = aConfig
-    self.__mBranchMap = []
+    self.__mBranchMap = None
+
+  def getBranchMap(self):
+    config = self.__mConfig
+    if self.__mBranchMap:
+      return self.__mBranchMap
+
+    if not config.getRemoteName():
+      self.__mBranchMap = self.__getLocalBranchMap(config.getRepo().heads)
+    else:
+      self.__mBranchMap = self.__getRemoteBranchMap(config.getRemoteName())
+
+    return self.__mBranchMap
 
   def getPrefix(self, aRef):
     """
@@ -43,7 +55,80 @@ class BranchManager:
       return 'refs/remotes/'
     return 'refs/heads/'
 
-  def getBranchMap(self, aRefList):
+  def getLocalBranches(self):
+    """
+    Retrieve all local branches for the repository currently being processed, as
+    Branch objects.
+
+    :return: A list of Branch objects, each a mapping of a local HEAD in the
+             repository being processed.
+    """
+    branches = []
+    branchNames = self.getLocalBranchNames()
+    for branchName in branchNames:
+      branchPath = 'refs/heads/' + branchName
+      branch = Branch(branchPath, self.__getConfig())
+      branches.append(branch)
+    return branches
+
+  def getLocalBranchNames(self):
+    """
+    Retrieve the names of all of the branches in the local git repository.
+
+    :return: A list of the names of all the branches in the local git repository
+             currently being processed, as strings.
+    """
+    repo = self.__mConfig.getRepo()
+    heads = [x.name for x in repo.branches]
+    return heads
+
+  def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
+    """
+    Sort a list of Branch objects by the date the last activity occurred on them.
+
+    :param aBranchMap: A list of Branch objects that map Reference objects to
+                       a "healthy" status.
+    :param aHealthyDays: The number of days that a branch can be untouched and
+                         still be considered 'healthy'.
+
+    :return: A list of Branch objects, guaranteed to be sorted in non-
+             ascending order, by the iso-standardized date of last activity.
+    """
+    sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
+
+    finalBranchList = []
+    for someBranch in sortedBranchMap:
+      someBranch.markHealth(aHealthyDays)
+      branchPath = someBranch.getPath()
+      humanDate = someBranch.getLastActivityRelativeToNow()
+      branchHealth = someBranch.getHealth()
+      finalBranchList.append(someBranch)
+
+    return finalBranchList
+
+  def deleteAllOldBranches(self, aBranchesToDelete):
+    """
+    Remove branches specified by name from both the local repository and the
+    'origin' remote repository.
+
+    :param aBranchesToDelete: A list containing the names of branches to delete.
+
+    :warning: Use this method with care - it's operations are irreversible, and
+              you may end up losing work!
+    """
+    log = self.__getConfig().getLog()
+    for branchToDelete in aBranchesToDelete:
+      (branchName, lastActivityRel, branchHealth) = branchToDelete
+      if branchName.startswith('refs/heads'):
+        self.__deleteOldBranch(branchName)
+      elif branchName.startswith('remotes'):
+        splitName = branchName.split('/')
+        remoteName = splitName[len(splitName) - 2]
+        self.__deleteOldBranch(branchName, remoteName, True)
+
+  ## Private API ##
+
+  def __getLocalBranchMap(self, aRefList):
     """
     Retrieve the branch map for this manager for all local branches. The branch
     map is a list of Branch objects, each mapping a ref path to a
@@ -64,18 +149,18 @@ class BranchManager:
 
       # Don't include branches that should be ignored.
       shouldIgnore = False
-      for ignoredBranch in self.__getOptions().getIgnoredBranches():
+      for ignoredBranch in self.__getConfig().getIgnoredBranches():
         if branchName == ignoredBranch:
           shouldIgnore = True
           break
       if shouldIgnore:
         continue
 
-      newBranch = Branch(branchPath, self.__getOptions())
+      newBranch = Branch(branchPath, self.__getConfig())
       branchMap.append(newBranch)
     return branchMap
 
-  def getBranchMapFromRemote(self, aRemoteName):
+  def __getRemoteBranchMap(self, aRemoteName):
     """
     Retrieve the branch map for this manager for all branches on a given remote.
     The branch map is a list of Branch objects, each mapping a ref path to a
@@ -87,12 +172,12 @@ class BranchManager:
              to a health status.
     """
 
-    log = self.__getOptions()
+    log = self.__getConfig().getLog()
     if not aRemoteName:
       log.warn("Cannot get branches from nameless remote")
       return []
 
-    repo = self.__getOptions().getRepo()
+    repo = self.__getConfig().getRepo()
     assert(repo.bare == False)
     gitCmd = repo.git
 
@@ -102,82 +187,9 @@ class BranchManager:
         remoteToUse = someRemote
 
     remotePrefix = 'remotes/' + aRemoteName + '/'
-    return self.getBranchMap(remoteToUse.refs)
+    return self.__getLocalBranchMap(remoteToUse.refs)
 
-  def getLocalBranches(self):
-    """
-    Retrieve all local branches for the repository currently being processed, as
-    Branch objects.
-
-    :return: A list of Branch objects, each a mapping of a local HEAD in the
-             repository being processed.
-    """
-    branches = []
-    branchNames = self.getLocalBranchNames()
-    for branchName in branchNames:
-      branchPath = 'refs/heads/' + branchName
-      branch = Branch(branchPath, self.__getOptions())
-      branches.append(branch)
-    return branches
-
-  def getLocalBranchNames(self):
-    """
-    Retrieve the names of all of the branches in the local git repository.
-
-    :return: A list of the names of all the branches in the local git repository
-             currently being processed, as strings.
-    """
-    repo = self.__mConfig.getRepo()
-    heads = [x.name for x in repo.branches]
-    return heads
-
-def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
-  """
-  Sort a list of Branch objects by the date the last activity occurred on them.
-
-  :param aBranchMap: A list of Branch objects that map Reference objects to
-                     a "healthy" status.
-  :param aHealthyDays: The number of days that a branch can be untouched and
-                       still be considered 'healthy'.
-
-  :return: A list of Branch objects, guaranteed to be sorted in non-
-           ascending order, by the iso-standardized date of last activity.
-  """
-  sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
-
-  finalBranchList = []
-  for someBranch in sortedBranchMap:
-    someBranch.markHealth(aHealthyDays)
-    branchPath = someBranch.getPath()
-    humanDate = someBranch.getLastActivityRelativeToNow()
-    branchHealth = someBranch.getHealth()
-    finalBranchList.append(someBranch)
-
-  return finalBranchList
-
-  def deleteAllOldBranches(self, aBranchesToDelete):
-    """
-    Remove branches specified by name from both the local repository and the
-    'origin' remote repository.
-
-    :param aBranchesToDelete: A list containing the names of branches to delete.
-
-    :warning: Use this method with care - it's operations are irreversible, and
-              you may end up losing work!
-    """
-    log = self.__getOptions().getLog()
-    for branchToDelete in aBranchesToDelete:
-      (branchName, lastActivityRel, branchHealth) = branchToDelete
-      if branchName.startswith('refs/heads'):
-        self.__deleteOldBranch(branchName)
-      elif branchName.startswith('remotes'):
-        splitName = branchName.split('/')
-        remoteName = splitName[len(splitName) - 2]
-        self.__deleteOldBranch(branchName, remoteName, True)
-
-  ## Private API ##
-
-  def __getOptions(self):
+  def __getConfig(self):
     """
     Retrieve the options object that this BranchManager was instantiated
     with.
@@ -198,8 +210,8 @@ def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
            will be removed as well as the remote ones; otherwise, only the remote
            branches will be removed.
     """
-    log = self.__getOptions().getLog()
-    repo = self.__getOptions().getRepo()
+    log = self.__getConfig().getLog()
+    repo = self.__getConfig().getRepo()
 
     # Cowardly refuse to remove the special 'master' branch
     if aBranch.split('/')[-1] == 'master':

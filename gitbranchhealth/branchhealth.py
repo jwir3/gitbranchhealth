@@ -68,11 +68,7 @@ class BranchHealthApplication:
     repo = config.getRepo()
     manager = BranchManager(config)
 
-    if remoteName:
-      branchMap = manager.getBranchMapFromRemote(remoteName)
-    else:
-      branchMap = manager.getBranchMap(repo.heads)
-
+    branchMap = manager.getBranchMap()
     sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
     self.__printBranchHealthChart(sortedBranches, aStream)
 

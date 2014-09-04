@@ -23,14 +23,14 @@ class BranchTestSuite(GitRepoTest):
   #   self.assertEquals('1 week ago', branchOneWeek.getLastActivityRelativeToNow())
 
   def test_branch_sorting(self):
-    options = self.__mParent.getOptions()
+    options = self.__mParent.getConfig()
     manager = BranchManager(options)
     branches = [x.getName() for x in sorted(manager.getLocalBranches(), branchDateComparator)]
     expectedBranches = ['bug-14', 'bug-44', 'bug-27', 'bug-143', 'master']
     self.assertEqual(expectedBranches, branches)
 
   def test_mark_branch_health(self):
-    options = self.__mParent.getOptions()
+    options = self.__mParent.getConfig()
     manager = BranchManager(options)
     branches = manager.getLocalBranches()
     for someBranch in branches:
