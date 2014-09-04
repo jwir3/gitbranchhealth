@@ -54,6 +54,21 @@ class ManagerTestSuite(GitRepoTest):
 
     self.assertEquals(expectedBranches, actualBranches)
 
+    # Finally, check the same thing, but using "all" option:
+    config = BranchHealthConfig(conf.getRepoPath(),
+                                'all',
+                                1,
+                                aLogLevel=logging.DEBUG)
+    manager = BranchManager(config)
+    branchMap = manager.getBranchMap()
+    expectedBranches = ['bug-14', 'bug-14', 'bug-44', 'bug-44', 'bug-27', 'bug-27', 'bug-143', 'bug-143']
+    actualBranches = []
+    for someBranch in branchMap:
+      self.assertEquals(Branch.OLD, someBranch.getHealth())
+      actualBranches.append(someBranch.getName())
+
+    self.assertEquals(expectedBranches, actualBranches)
+
 def allTests():
   unittest.main()
 

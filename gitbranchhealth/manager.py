@@ -35,8 +35,16 @@ class BranchManager:
       return self.__mBranchMap
 
     if not config.getRemoteName():
+      # We're operating on the local repo only.
       self.__mBranchMap = self.__getBranchMapFromRefList(config.getRepo().heads)
+    elif config.getRemoteName() == 'all':
+      # We're operating on ALL remotes, as well as local branches.
+      self.__mBranchMap = []
+      for remote in config.getRepo().remotes:
+        self.__mBranchMap = self.__mBranchMap + self.__getRemoteBranchMap(remote.name)
+      self.__mBranchMap = self.__mBranchMap + self.__getBranchMapFromRefList(config.getRepo().heads)
     else:
+      # We're operating on a specific remote
       self.__mBranchMap = self.__getRemoteBranchMap(config.getRemoteName())
 
     return self.__sortBranchMapByDate()
