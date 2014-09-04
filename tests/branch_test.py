@@ -13,6 +13,9 @@ class BranchTestSuite(GitRepoTest):
     self.__mParent = super(BranchTestSuite, self)
     self.__mParent.setUp()
 
+  def tearDown(self):
+    self.__mParent.tearDown()
+
   # def test_relative_last_activity(self):
   #   curTime = datetime.datetime.now()
   #   fiveDaysAgo = curTime + datetime.timedelta(-5)

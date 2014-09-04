@@ -13,6 +13,9 @@ class ManagerTestSuite(GitRepoTest):
     self.__mConfig = self.__mParent.getConfig()
     self.__mTempDir = self.__mParent.getTempDir()
 
+  def tearDown(self):
+    self.__mParent.tearDown()
+
   def test_manager_construction(self):
     manager = BranchManager(self.__mConfig)
     localBranches = manager.getLocalBranchNames()
@@ -22,6 +25,7 @@ class ManagerTestSuite(GitRepoTest):
 
   def test_get_branch_map(self):
     # Set 'days' to 1 so that all branches should be old
+    # Initially test local branches
     conf = self.__mConfig
     config = BranchHealthConfig(conf.getRepoPath(),
                                 conf.getRemoteName(),
@@ -29,11 +33,26 @@ class ManagerTestSuite(GitRepoTest):
                                 aLogLevel=logging.DEBUG)
     manager = BranchManager(config)
     branchMap = manager.getBranchMap()
-    expectedBranches = ['bug-14', 'bug-143', 'bug-27', 'bug-44']
-
+    expectedBranches = ['bug-14', 'bug-44', 'bug-27', 'bug-143']
+    actualBranches = []
     for someBranch in branchMap:
-#      self.assertEquals(Branch.OLD, someBranch.getHealth())
-      self.assertTrue(someBranch.getName() in expectedBranches)
+      self.assertEquals(Branch.OLD, someBranch.getHealth())
+      actualBranches.append(someBranch.getName())
+
+    self.assertEquals(expectedBranches, actualBranches)
+
+    # Now perform the same stuff, but on origin as a remote
+    config = BranchHealthConfig(conf.getRepoPath(),
+                                'origin',
+                                1,
+                                aLogLevel=logging.DEBUG)
+    manager = BranchManager(config)
+    actualBranches = []
+    for someBranch in branchMap:
+      self.assertEquals(Branch.OLD, someBranch.getHealth())
+      actualBranches.append(someBranch.getName())
+
+    self.assertEquals(expectedBranches, actualBranches)
 
 def allTests():
   unittest.main()

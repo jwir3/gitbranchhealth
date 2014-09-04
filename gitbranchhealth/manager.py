@@ -39,7 +39,7 @@ class BranchManager:
     else:
       self.__mBranchMap = self.__getRemoteBranchMap(config.getRemoteName())
 
-    return self.__mBranchMap
+    return self.__sortBranchMapByDate()
 
   def getPrefix(self, aRef):
     """
@@ -82,30 +82,6 @@ class BranchManager:
     heads = [x.name for x in repo.branches]
     return heads
 
-  def getBranchMapSortedByDate(self, aBranchMap, aHealthyDays):
-    """
-    Sort a list of Branch objects by the date the last activity occurred on them.
-
-    :param aBranchMap: A list of Branch objects that map Reference objects to
-                       a "healthy" status.
-    :param aHealthyDays: The number of days that a branch can be untouched and
-                         still be considered 'healthy'.
-
-    :return: A list of Branch objects, guaranteed to be sorted in non-
-             ascending order, by the iso-standardized date of last activity.
-    """
-    sortedBranchMap = sorted(aBranchMap, cmp=branchDateComparator)
-
-    finalBranchList = []
-    for someBranch in sortedBranchMap:
-      someBranch.markHealth(aHealthyDays)
-      branchPath = someBranch.getPath()
-      humanDate = someBranch.getLastActivityRelativeToNow()
-      branchHealth = someBranch.getHealth()
-      finalBranchList.append(someBranch)
-
-    return finalBranchList
-
   def deleteAllOldBranches(self, aBranchesToDelete):
     """
     Remove branches specified by name from both the local repository and the
@@ -127,6 +103,25 @@ class BranchManager:
         self.__deleteOldBranch(branchName, remoteName, True)
 
   ## Private API ##
+
+  def __sortBranchMapByDate(self):
+    """
+    Sort the list of Branch objects by the date the last activity occurred on them.
+
+    :return: A list of Branch objects, guaranteed to be sorted in non-
+             ascending order, by the iso-standardized date of last activity.
+    """
+    sortedBranchMap = sorted(self.__mBranchMap, cmp=branchDateComparator)
+
+    finalBranchList = []
+    for someBranch in sortedBranchMap:
+      someBranch.markHealth(self.__mConfig.getHealthyDays())
+      branchPath = someBranch.getPath()
+      humanDate = someBranch.getLastActivityRelativeToNow()
+      branchHealth = someBranch.getHealth()
+      finalBranchList.append(someBranch)
+
+    return finalBranchList
 
   def __getBranchMapFromRefList(self, aRefList):
     """

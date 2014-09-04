@@ -69,8 +69,7 @@ class BranchHealthApplication:
     manager = BranchManager(config)
 
     branchMap = manager.getBranchMap()
-    sortedBranches = manager.getBranchMapSortedByDate(branchMap, config.getHealthyDays())
-    self.__printBranchHealthChart(sortedBranches, aStream)
+    self.__printBranchHealthChart(branchMap, aStream)
 
   def getConfig(self):
     """
