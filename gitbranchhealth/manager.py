@@ -35,7 +35,7 @@ class BranchManager:
       return self.__mBranchMap
 
     if not config.getRemoteName():
-      self.__mBranchMap = self.__getLocalBranchMap(config.getRepo().heads)
+      self.__mBranchMap = self.__getBranchMapFromRefList(config.getRepo().heads)
     else:
       self.__mBranchMap = self.__getRemoteBranchMap(config.getRemoteName())
 
@@ -128,7 +128,7 @@ class BranchManager:
 
   ## Private API ##
 
-  def __getLocalBranchMap(self, aRefList):
+  def __getBranchMapFromRefList(self, aRefList):
     """
     Retrieve the branch map for this manager for all local branches. The branch
     map is a list of Branch objects, each mapping a ref path to a
@@ -187,7 +187,7 @@ class BranchManager:
         remoteToUse = someRemote
 
     remotePrefix = 'remotes/' + aRemoteName + '/'
-    return self.__getLocalBranchMap(remoteToUse.refs)
+    return self.__getBranchMapFromRefList(remoteToUse.refs)
 
   def __getConfig(self):
     """
