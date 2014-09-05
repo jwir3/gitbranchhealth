@@ -45,4 +45,5 @@ If you choose to specify a configuration option, use the section header `[branch
 | No Color     | Specify not to use ANSI colors when printing the branch health results. | N/A | -n, --nocolor | nocolor |
 | Remote Name  | Specify the name of a remote repository on which to operate. | `None` (Operate on local repository only) | -r `<remote name>` | - |
 | Repository Path | Specify the location of the repository on which to operate. | Current directory (works on any subdirectory within a git repository) | -R, --repo | - |
+| Show All Remotes | Show branches from all remotes, including local repository. | False | --all-remotes | - |
 | Verbose Output | Make `git-branchhealth` output as much information on the command line as possible. | N/A | -v | - |
