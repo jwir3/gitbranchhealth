@@ -34,7 +34,9 @@ class BranchManager:
     if self.__mBranchMap:
       return self.__mBranchMap
 
-    if not config.getRemoteName():
+    config.getLog().debug("Remote name is: " + str(config.getRemoteName()))
+
+    if not config.getRemoteName() or config.getRemoteName() == 'local':
       # We're operating on the local repo only.
       self.__mBranchMap = self.__getBranchMapFromRefList(config.getRepo().heads)
     elif config.getRemoteName() == 'all':
