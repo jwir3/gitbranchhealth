@@ -6,6 +6,8 @@ import sys
 from nicelog.formatters import ColorLineFormatter
 import logging
 
+from util import parseIgnoredBranchListFromString
+
 
 class BranchHealthConfig:
   """
@@ -28,7 +30,13 @@ class BranchHealthConfig:
     self.__setupLogging(aLogLevel)
 
     self.__mIgnoredBranches = aIgnoredBranches
+    for branch in self.__mIgnoredBranches:
+      self.getLog().debug("(Command Line) Ignoring branch: " + str(branch))
+
     self.__setupConfigOptions()
+
+    for branch in self.__mIgnoredBranches:
+      self.getLog().debug("Ignoring branch: " + str(branch))
 
   def shouldDeleteOldBranches(self):
     return self.mDeleteOldBranches
@@ -75,12 +83,38 @@ class BranchHealthConfig:
 
   def __setupIgnoreBranches(self):
     try:
-      ignoreBranches = not self.mParser.get_value(option='noignore')
+      ignoredBranchString = self.mParser.get_value(option='ignoredbranches')
+      self.getLog().debug("Ignored branch string is: " + str(ignoredBranchString))
     except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-      ignoreBranches = True
+      # Do nothing, since we just want to continue merrily.
+      ignoredBranchString = ''
 
-    if not ignoreBranches:
-      self.__mIgnoredBranches = []
+    branchSet = set(self.__mIgnoredBranches)
+
+    # The default value for self.__mIgnoredBranches should be: 'HEAD' and 'master'.
+    defaultBranches = set(['HEAD', 'master'])
+    commandLineSpecified = defaultBranches != branchSet
+    configSpecified = False
+    configIgnoredBranches = []
+
+    if len(ignoredBranchString) > 0:
+      configIgnoredBranches = parseIgnoredBranchListFromString(ignoredBranchString)
+      self.getLog().debug("Config ignored branches: " + str(configIgnoredBranches))
+      configSpecified = len(configIgnoredBranches) != 0
+
+    self.getLog().debug("Config specified? " + str(configSpecified))
+    self.getLog().debug("Command line specified? " + str(commandLineSpecified))
+    if configSpecified and commandLineSpecified:
+      branchSet = branchSet.union(configIgnoredBranches)
+      self.getLog().warn("Branches to be ignored specified on the command line (" + str(self.__mIgnoredBranches) + ") and those specified to be ignored in the config file (" + str(configIgnoredBranches) + ") are different. Ignoring the union of these two sets.")
+    elif configSpecified:
+      branchSet = set(configIgnoredBranches)
+    else:
+      branchSet = set(self.__mIgnoredBranches)
+
+    branchList = list(branchSet)
+
+    self.__mIgnoredBranches = branchList
 
   def __setupColor(self):
     try:

@@ -29,3 +29,17 @@ def branchDateComparator(aBranch, aOther):
     return 0
 
   return 1
+
+def parseIgnoredBranchListFromString(aIgnoredBranchString):
+  # We always want to ignore HEAD, because it's going to be covered by another
+  # branch if it's not detached, and if it is detached, we don't want to deal
+  # with it.
+  ignoredBranches = set(['HEAD'])
+
+  if len(aIgnoredBranchString) > 0:
+    aIgnoredBranchString = aIgnoredBranchString.strip()
+    branchNames = aIgnoredBranchString.split(',')
+    for name in branchNames:
+      ignoredBranches.add(name.strip())
+
+  return list(ignoredBranches)

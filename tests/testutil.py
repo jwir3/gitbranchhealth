@@ -36,8 +36,9 @@ class GitRepoTest(unittest.TestCase):
     self.__trackAllRemoteBranches()
 
   def tearDown(self):
-    rmtree(self.__mTempDir)
-    rmtree(self.__mOriginTempDir)
+    pass
+    # rmtree(self.__mTempDir)
+    # rmtree(self.__mOriginTempDir)
 
   def getConfig(self):
     return self.__mConfig
