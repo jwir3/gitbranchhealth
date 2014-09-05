@@ -23,6 +23,15 @@ class ManagerTestSuite(GitRepoTest):
     expectedBranches = ['bug-14', 'bug-143', 'bug-27', 'bug-44', 'master']
     self.assertEquals(expectedBranches, localBranches)
 
+  def test_get_prefix(self):
+    conf = self.__mConfig
+    manager = BranchManager(conf)
+    pref1 = manager.getPrefix(conf.getRepo().heads)
+    pref2 = manager.getPrefix(conf.getRepo().remotes.origin.refs[0])
+    self.assertEquals('refs/heads/', pref1)
+    self.assertEquals('refs/remotes/', pref2)
+
+
   def test_get_branch_map(self):
     # Set 'days' to 1 so that all branches should be old
     # Initially test local branches
@@ -68,6 +77,22 @@ class ManagerTestSuite(GitRepoTest):
       actualBranches.append(someBranch.getName())
 
     self.assertEquals(expectedBranches, actualBranches)
+
+  def test_get_local_branches(self):
+    manager = BranchManager(self.__mConfig)
+    branches = manager.getLocalBranches()
+    branchNames = manager.getLocalBranchNames()
+    names = []
+    for branch in branches:
+      names.append(branch.getName())
+
+    self.assertEquals(branchNames, names)
+
+  def test_delete_all_old_branches(self):
+    # TODO: A test needs to be written for deleteAllOldBranches(), as soon as it
+    #       is rewritten to conform to the new branch-object style (it's currently
+    #       using the old tuple style). See issue #
+    pass
 
 def allTests():
   unittest.main()
