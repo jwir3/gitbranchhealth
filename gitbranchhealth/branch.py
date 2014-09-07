@@ -26,6 +26,11 @@ class Branch:
   def __str__(self):
     return self.__mBranchPath + ", Last Activity: " + str(self.__mLastActivity) + "(" + self.__mLastActivityRelative +  ")"
 
+  def isRemote(self):
+    if self.getPath().startswith('refs/remotes'):
+      return True
+    return False
+
   def getPath(self):
     return self.__mBranchPath
 
@@ -38,10 +43,29 @@ class Branch:
     return str(self.__mLastActivityRelative)
 
   def getHealth(self):
+    self.markHealth()
     return self.__mHealth
 
   def getName(self):
     return self.getPath().split('/')[-1]
+
+  def markHealth(self):
+    """
+    Determine whether this branch is healthy, based on the date of last activity.
+    """
+
+    healthyDays = self.__mConfig.getHealthyDays()
+    branchPath = self.getPath()
+    isoDate = self.getLastActivity()
+    humanDate = self.getLastActivityRelativeToNow()
+
+    branchLife = date.today() - isoDate.date()
+    if branchLife > timedelta(healthyDays * 2):
+      self.__mHealth = Branch.OLD
+    elif branchLife > timedelta(healthyDays):
+      self.__mHealth = Branch.AGED
+    else:
+      self.__mHealth = Branch.HEALTHY
 
   ## Private API ##
 
@@ -60,26 +84,6 @@ class Branch:
         self.__mLastActivity = self.__parseDateFromString(lastActivityNonRel).astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
         break
       i = i + 1
-
-  def markHealth(self, aHealthyDays):
-    """
-    Determine whether this branch is healthy, based on the date of last activity.
-
-    @param aHealthyDays The number of days that a branch can be untouched and
-           still be considered 'healthy'.
-    """
-
-    branchPath = self.getPath()
-    isoDate = self.getLastActivity()
-    humanDate = self.getLastActivityRelativeToNow()
-
-    branchLife = date.today() - isoDate.date()
-    if branchLife > timedelta(aHealthyDays * 2):
-      self.__mHealth = Branch.OLD
-    elif branchLife > timedelta(aHealthyDays):
-      self.__mHealth = Branch.AGED
-    else:
-      self.__mHealth = Branch.HEALTHY
 
   def __parseDateFromString(self, aDateString):
     return dateutil.parser.parse(aDateString)

@@ -88,11 +88,35 @@ class ManagerTestSuite(GitRepoTest):
 
     self.assertEquals(branchNames, names)
 
-  def test_delete_all_old_branches(self):
-    # TODO: A test needs to be written for deleteAllOldBranches(), as soon as it
-    #       is rewritten to conform to the new branch-object style (it's currently
-    #       using the old tuple style). See issue #
-    pass
+  def test_delete_all_old_local_branches(self):
+    manager = BranchManager(self.__mConfig)
+
+    self.assertTrue(len(manager.getLocalBranches()) != 1)
+
+    branchesToDelete = manager.getLocalBranches()
+    manager.deleteAllOldBranches(branchesToDelete)
+
+    # Master should be the only branch remaining
+    self.assertTrue(len(manager.getLocalBranches()) == 1)
+
+  def test_delete_all_old_remote_branches(self):
+    config = BranchHealthConfig(self.__mConfig.getRepoPath(),
+                                'origin',
+                                1)
+    manager = BranchManager(config)
+
+    self.assertTrue(len(manager.getLocalBranches()) != 1)
+    self.assertTrue(len(config.getRepo().remotes.origin.refs) != 2)
+
+    branchMap = manager.getBranchMap()
+    branchesToDelete = [x for x in branchMap]
+    manager.deleteAllOldBranches(branchesToDelete)
+
+    # Master should be the only branch remaining
+    self.assertTrue(len(manager.getLocalBranches()) == 1)
+
+    # Master and HEAD should be remaining
+    self.assertTrue(len(config.getRepo().remotes.origin.refs) == 2)
 
 def allTests():
   unittest.main()

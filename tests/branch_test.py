@@ -37,7 +37,7 @@ class BranchTestSuite(GitRepoTest):
     manager = BranchManager(options)
     branches = manager.getLocalBranches()
     for someBranch in branches:
-      someBranch.markHealth(options.getHealthyDays())
+      someBranch.markHealth()
       self.assertEquals(Branch.OLD, someBranch.getHealth())
 
     # Now, create a new branch so we can test if it returns the value
@@ -56,7 +56,7 @@ class BranchTestSuite(GitRepoTest):
     index.commit("A new commit")
 
     newBranch = Branch('refs/heads/aNewBranch', options)
-    newBranch.markHealth(options.getHealthyDays())
+    newBranch.markHealth()
     self.assertEquals(Branch.HEALTHY, newBranch.getHealth())
 
 def allTests():

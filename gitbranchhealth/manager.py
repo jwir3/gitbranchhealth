@@ -95,7 +95,7 @@ class BranchManager:
   def deleteAllOldBranches(self, aBranchesToDelete):
     """
     Remove branches specified by name from both the local repository and the
-    'origin' remote repository.
+    remote repository on which the branch health search was operating.
 
     :param aBranchesToDelete: A list containing the names of branches to delete.
 
@@ -104,13 +104,15 @@ class BranchManager:
     """
     log = self.__getConfig().getLog()
     for branchToDelete in aBranchesToDelete:
-      (branchName, lastActivityRel, branchHealth) = branchToDelete
-      if branchName.startswith('refs/heads'):
-        self.__deleteOldBranch(branchName)
-      elif branchName.startswith('remotes'):
-        splitName = branchName.split('/')
+      branchPath = branchToDelete.getPath()
+      lastActivityRel = branchToDelete.getLastActivityRelativeToNow()
+      branchHealth = branchToDelete.getHealth()
+      remoteName = 'local'
+      if branchToDelete.isRemote():
+        splitName = branchPath.split('/')
         remoteName = splitName[len(splitName) - 2]
-        self.__deleteOldBranch(branchName, remoteName, True)
+
+      self.__deleteOldBranch(branchPath, remoteName)
 
   ## Private API ##
 
@@ -125,7 +127,7 @@ class BranchManager:
 
     finalBranchList = []
     for someBranch in sortedBranchMap:
-      someBranch.markHealth(self.__mConfig.getHealthyDays())
+      someBranch.markHealth()
       branchPath = someBranch.getPath()
       humanDate = someBranch.getLastActivityRelativeToNow()
       branchHealth = someBranch.getHealth()
@@ -204,11 +206,11 @@ class BranchManager:
     """
     return self.__mConfig
 
-  def __deleteOldBranch(self, aBranch, aRemote='local', aShouldDeleteLocal=True):
+  def __deleteOldBranch(self, aBranchPath, aRemote='local', aShouldDeleteLocal=True):
     """
     Delete a given branch from a remote, the local repository, or both.
 
-    :param aBranch: The path of the branch to remove.
+    :param aBranchPath: The path of the branch to remove.
     :param aRemote: The name of the remote repository on which to work (default:
                     'local', representing the local repository).
     :param aShouldDeleteLocal: If True and aRemote != 'local', then local branches
@@ -219,20 +221,26 @@ class BranchManager:
     repo = self.__getConfig().getRepo()
 
     # Cowardly refuse to remove the special 'master' branch
-    if aBranch.split('/')[-1] == 'master':
+    if aBranchPath.split('/')[-1] == 'master':
       log.warn("Cowardly refusing to delete master branch")
       return
 
+    log.debug("Saw deletion request for remote named: " + str(aRemote))
     if aRemote == 'local':
-      log.debug("Going to delete LOCAL branch: " + aBranch)
-      if aBranch.split('/')[-1] in repo.heads:
-        Head.delete(aBranch.split('/')[-1])
+      log.debug("Going to delete LOCAL branch: " + aBranchPath)
+      if aBranchPath.split('/')[-1] in repo.heads:
+        branchRef = Reference(repo, aBranchPath)
+
+        # NOTE: Head.delete has a parameter in it's kwargs that allows you to
+        #       specify whether to "force" this to be deleted, even if it hasn't
+        #       been merged into the main development trunk.
+        Head.delete(repo, branchRef)
     else:
-      log.debug("Going to delete REMOTE branch: " + aBranch)
-      branchRef = RemoteReference(repo, join_path('refs', aBranch))
+      log.debug("Going to delete REMOTE branch: " + aBranchPath)
+      branchRef = RemoteReference(repo, aBranchPath)
       log.debug("Ready to delete: " + str(branchRef))
       RemoteReference.delete(repo, branchRef)
 
       # Now, delete the corresponding local branch, if it exists
       if aShouldDeleteLocal:
-        self.deleteOldBranch(branchRef.remote_head)
+        self.__deleteOldBranch(join_path('refs/heads', branchRef.remote_head))
