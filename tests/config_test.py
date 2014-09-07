@@ -61,6 +61,41 @@ class ConfigTestSuite(GitRepoTest):
 
     self.assertEquals(expectedIgnoredBranches, set(conf.getIgnoredBranches()))
 
+  def test_default_trunk_name(self):
+    expectedTrunkName = 'master'
+    trunkName = self.__mContext.getConfig().getTrunkBranchName()
+    self.assertEquals(expectedTrunkName, trunkName)
+
+  def test_command_line_trunk_name(self):
+    expectedTrunkName = 'bug-143'
+    self.__mContext = branchhealth.BranchHealthApplication(['-t', expectedTrunkName])
+    conf = self.__mContext.getConfig()
+    self.assertEquals(expectedTrunkName, conf.getTrunkBranchName())
+
+  def test_config_file_trunk_name(self):
+    expectedTrunkName = 'bug-27'
+    configFileHandle = open(os.path.join(self.__mTempDir, 'testrepo/.git/config'), "w")
+    configFileHandle.write("[branchhealth]\n")
+    configFileHandle.write("\ttrunk=" + expectedTrunkName)
+    configFileHandle.close()
+    repoDir = os.path.join(self.__mTempDir, "testrepo")
+    self.__mContext = branchhealth.BranchHealthApplication(['-R', repoDir])
+    conf = self.__mContext.getConfig()
+
+    self.assertEquals(expectedTrunkName, conf.getTrunkBranchName())
+
+  def test_both_trunk_name(self):
+    expectedBranchName = 'bug-143'
+    configFileHandle = open(os.path.join(self.__mTempDir, 'testrepo/.git/config'), "w")
+    configFileHandle.write("[branchhealth]\n")
+    configFileHandle.write("\tignoredbranches=bug-27")
+    configFileHandle.close()
+    repoDir = os.path.join(self.__mTempDir, "testrepo")
+    self.__mContext = branchhealth.BranchHealthApplication(['-R', repoDir, '-t', expectedBranchName])
+    conf = self.__mContext.getConfig()
+
+    self.assertEquals(expectedBranchName, conf.getTrunkBranchName())
+
 def allTests():
   unittest.main()
 

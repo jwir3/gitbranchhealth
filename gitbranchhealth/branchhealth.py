@@ -123,6 +123,7 @@ class BranchHealthApplication:
     parser.add_argument('-R', '--repository', action='store',  metavar=('repository'), help='Path to git repository where branches should be listed', nargs='?', default='.', dest='repo')
     parser.add_argument('-D', '--delete', action='store_true', help='Delete old branches that are considered "unhealthy"', dest='deleteOld')
     parser.add_argument('-i-', '--ignore-branches', action='store', help='Ignore a set of branches specified by a comma-separated list of branch names', dest='ignoredBranches', default='master')
+    parser.add_argument('-t', '--trunk', action='store', help='Specify the trunk branch name for the given repository', metavar=('trunkBranch'), dest='trunkBranch', default='master')
 
     # Make sure that only one of -r and --all-remotes is specified
     remoteGroup = parser.add_mutually_exclusive_group()
@@ -165,7 +166,7 @@ class BranchHealthApplication:
     elif parsed.allRemotes:
       remote = 'all'
 
-    return BranchHealthConfig(repo, remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, ignoredBranches, possibleLogLevels[logLevel])
+    return BranchHealthConfig(repo, remote, parsed.numDays, parsed.badOnly, parsed.noColor, parsed.deleteOld, parsed.trunkBranch, ignoredBranches, possibleLogLevels[logLevel])
 
   def __printBranchHealthChart(self, aBranchMap, aStream):
     """

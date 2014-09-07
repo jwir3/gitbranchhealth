@@ -39,7 +39,7 @@ class ManagerTestSuite(GitRepoTest):
     config = BranchHealthConfig(conf.getRepoPath(),
                                 conf.getRemoteName(),
                                 1,
-                                aLogLevel=logging.DEBUG)
+                                aLogLevel=logging.ERROR)
     manager = BranchManager(config)
     branchMap = manager.getBranchMap()
     expectedBranches = ['bug-14', 'bug-44', 'bug-27', 'bug-143']
@@ -54,7 +54,7 @@ class ManagerTestSuite(GitRepoTest):
     config = BranchHealthConfig(conf.getRepoPath(),
                                 'origin',
                                 1,
-                                aLogLevel=logging.DEBUG)
+                                aLogLevel=logging.ERROR)
     manager = BranchManager(config)
     actualBranches = []
     for someBranch in branchMap:
@@ -67,7 +67,7 @@ class ManagerTestSuite(GitRepoTest):
     config = BranchHealthConfig(conf.getRepoPath(),
                                 'all',
                                 1,
-                                aLogLevel=logging.DEBUG)
+                                aLogLevel=logging.ERROR)
     manager = BranchManager(config)
     branchMap = manager.getBranchMap()
     expectedBranches = ['bug-14', 'bug-14', 'bug-44', 'bug-44', 'bug-27', 'bug-27', 'bug-143', 'bug-143']

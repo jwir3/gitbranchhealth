@@ -14,7 +14,7 @@ class BranchHealthConfig:
   Composition of all possible options for a given run of git branchhealth.
   """
 
-  def __init__(self, aRepoPath, aRemoteName='', aNumDays=14, aBadOnly=False, aNoColor=False, aDeleteOldBranches=False, aIgnoredBranches=['master', 'HEAD'], aLogLevel=logging.ERROR):
+  def __init__(self, aRepoPath, aRemoteName='', aNumDays=14, aBadOnly=False, aNoColor=False, aDeleteOldBranches=False, aTrunkBranch='master', aIgnoredBranches=['master', 'HEAD'], aLogLevel=logging.ERROR):
     """
     Initialize a new BranchHealthConfig object with parameters that were given
     from the command line.
@@ -24,6 +24,7 @@ class BranchHealthConfig:
     self.mNumDays = aNumDays
     self.mBadOnly = aBadOnly
     self.mNoColor = aNoColor
+    self.mTrunkBranch = aTrunkBranch
     self.mRepo = Repo(self.mRepoPath)
     self.mDeleteOldBranches = aDeleteOldBranches
 
@@ -40,6 +41,9 @@ class BranchHealthConfig:
 
   def shouldDeleteOldBranches(self):
     return self.mDeleteOldBranches
+
+  def getTrunkBranchName(self):
+    return self.mTrunkBranch
 
   def getIgnoredBranches(self):
     return self.__mIgnoredBranches
@@ -67,7 +71,25 @@ class BranchHealthConfig:
 
   ## Private API ##
 
-  def __setupLogging(self, aLogLevel=logging.DEBUG):
+  def __setupTrunkName(self):
+    specifiedTrunkBranchOnCommandLine = False
+    if self.getTrunkBranchName() != 'master':
+      specifiedTrunkBranchOnCommandLine = True
+
+    try:
+      trunkName = self.mParser.get_value(option='trunk')
+      self.getLog().debug("Trunk branch name from config is: " + str(trunkName))
+    except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+      # Do nothing, since we've already setup the trunk branch in the default
+      # construction.
+      trunkName = self.getTrunkBranchName()
+
+    if trunkName != self.getTrunkBranchName() and specifiedTrunkBranchOnCommandLine:
+      self.getLog().warn('You specified a trunk branch name on the command line ("' + str(self.getTrunkBranchName()) +'"), and a trunk branch in the configuration file ("' + str(trunkName) + '"). Using the command line version.')
+      trunkName = self.getTrunkBranchName()
+    self.mTrunkBranch = trunkName
+
+  def __setupLogging(self, aLogLevel=logging.ERROR):
     log = logging.getLogger("git-branchhealth")
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(ColorLineFormatter())
@@ -129,3 +151,4 @@ class BranchHealthConfig:
     log = self.getLog()
     self.__setupColor()
     self.__setupIgnoreBranches()
+    self.__setupTrunkName()
