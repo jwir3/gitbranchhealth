@@ -10,7 +10,8 @@ progEmail = 'jaywir3@gmail.com'
 progUrl = 'http://github.com/jwir3/gitbranchhealth'
 downloadUrl = 'https://github.com/jwir3/gitbranchhealth/archive/gitbranchhealth-v0.2.2.tar.gz',
 entry_points = { 'console_scripts': [
-  'git-branchhealth = gitbranchhealth.branchhealth:runMain',
+  'git-branch-health = gitbranchhealth.branchhealth:runMain',
+  'git-branchhealth = gitbranchhealth.branchhealth:runMainOld'
 ]}
 requirements = [
   'ansicolors>=1.0.2',

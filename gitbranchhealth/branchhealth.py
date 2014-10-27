@@ -222,7 +222,10 @@ class BranchHealthApplication:
       manager.deleteAllOldBranches(deleteBucket)
 
 # Main entry point
-def runMain():
+def runMain(aInOldMode=False):
+  if aInOldMode:
+    print("WARNING: 'git branchhealth' has been replaced with 'git branch-health'. The older command variant will be removed in the 1.0 release.")
+
   context = BranchHealthApplication(sys.argv[1:])
 
   if context.getConfig().getRepoPath() == None:
@@ -230,6 +233,12 @@ def runMain():
     return
 
   context.showBranchHealth()
+
+# Entry point for 'git branchhealth', the old version of the command. This is
+# provided only for backwards compatibility. Notify the user that this will be
+# going away as of version 1.0.
+def runMainOld():
+  runMain(True)
 
 if __name__ == '__main__':
   runMain()
