@@ -1,5 +1,5 @@
 extern crate clap;
-use clap::{App, Arg, SubCommand};
+use clap::{App, Arg, ArgGroup};
 
 fn main() {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -66,5 +66,18 @@ fn main() {
               .default_value("master")
               .takes_value(true)
         )
+        .arg(
+            Arg::with_name("remote")
+              .short("r")
+              .long("remote")
+              .help("Operate on specified remote. May not be used with --all-remotes")
+              .takes_value(true)
+        )
+        .arg(
+            Arg::with_name("all_remotes")
+              .long("all-remotes")
+              .help("Run a branch health check for all remotes, including local branches. May not be used with --remote")
+        )
+        .group(ArgGroup::with_name("remotes").args(&["all_remotes", "remote"]))
         .get_matches();
 }
