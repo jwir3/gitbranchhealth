@@ -2,3 +2,4 @@
 build/**
 dist/**
 gitbranchhealth.egg-info/**
+target/**
